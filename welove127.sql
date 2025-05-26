@@ -10,7 +10,12 @@
 -- FEE (Receipt Number, Amount, Payment deadline, Date paid, Payment status, Student number, Organization name)
 -- MEMBER_SERVES_ORGANIZATION (Student number, Organization name, Academic year, Semester, Role, Status, Committee)
 
-CREATE TABLE member(
+DROP DATABASE IF EXISTS `welove127`;
+CREATE DATABASE IF NOT EXISTS `welove127`
+GRANT ALL ON customeritem.* TO 'admin'@'localhost';
+USE `welove127`;
+
+CREATE TABLE IF NOT EXISTS member(
     student_no VARCHAR(10) PRIMARY KEY, 
     first_name VARCHAR(50) NOT NULL,
     middle_name VARCHAR(50), 

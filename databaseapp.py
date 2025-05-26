@@ -3,8 +3,8 @@ from mysql.connector import errorcode
 
 DB_CONFIG = {
     'host': '127.0.0.1',
-    'user': 'group4', 
-    'password': 'group4', 
+    'user': 'admin', 
+    'password': 'admin', 
     'database': 'welove127' 
 }
 
