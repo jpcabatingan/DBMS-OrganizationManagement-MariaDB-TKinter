@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS organization(
 );
 
 CREATE TABLE IF NOT EXISTS fee(
-    receipt_no VARCHAR(10) PRIMARY KEY,
+    receipt_no VARCHAR(50) PRIMARY KEY,
     amount DECIMAL(10,2) NOT NULL, 
     payment_deadline DATE NOT NULL, 
     date_paid DATE, 
@@ -56,6 +56,23 @@ CREATE TABLE IF NOT EXISTS serves(
     FOREIGN KEY(student_no) REFERENCES member(student_no) ON DELETE CASCADE,
     FOREIGN KEY (org_name) REFERENCES organization (org_name) ON DELETE CASCADE
 );
+
+
+-- Initial Org Members
+-- Initial Members
+INSERT INTO member (student_no, first_name, middle_name, last_name, degree_program, gender, batch) VALUES
+('2023-00001', 'Gumball', NULL, 'Watterson', 'BS Computer Science', 'Male', 2023),
+('2023-00002', 'Anais', NULL, 'Watterson', 'BS Applied Mathematics', 'Female', 2023),
+('2023-00003', 'Darwin', NULL, 'Watterson', 'BS Biology', 'Male', 2023),
+('2023-00004', 'Nicole', NULL, 'Watterson', 'BS Chemistry', 'Female', 2023),
+('2023-00005', 'Richard', NULL, 'Watterson', 'BA Communication Arts', 'Male', 2023);
+
+-- Initial Organizations
+INSERT INTO organization (org_id, org_name, no_of_members) VALUES
+('0001', 'ACSS', 0),
+('0002', 'YSES', 0),
+('0003', 'COSS', 0),
+('0004', 'DSG', 0);
 
 ---1. View all members of the organization by role, status, gender, degree program, batch (year of
 ---     membership), and committee. (Note: we assume one committee membership only per
@@ -122,7 +139,7 @@ WHERE s.org_name = "replace with org name";
 ---5. View all Presidents (or any other role) of a given organization for every academic year in
 ---     reverse chronological order (current to past).
     SELECT
-        f.receipt_no, -- CORRECTED: Changed from f.receipt_number to f.receipt_no
+        f.receipt_no, 
         f.amount,
         f.payment_deadline,
         f.date_paid,
