@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS member(
 );
 
 CREATE TABLE IF NOT EXISTS organization(
+    org_id VARCHAR(10) PRIMARY KEY, 
     org_name VARCHAR(50) PRIMARY KEY, 
     no_of_members INT
 );
