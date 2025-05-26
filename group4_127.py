@@ -84,11 +84,12 @@ class AuthPage(ttk.Frame):
         ttk.Label(self, text="Org ID:").grid(row=5, column=0, sticky=W, pady=2)
         self.org_id_entry = ttk.Entry(self)
         self.org_id_entry.grid(row=5, column=1, sticky=(W, E), pady=2)
-        ttk.Label(self, text="Org Name:").grid(row=6, column=0, sticky=W, pady=2)
-        self.org_name_entry = ttk.Entry(self)
-        self.org_name_entry.grid(row=6, column=1, sticky=(W, E), pady=2) # Used for signup, and for login to differentiate
-        ttk.Button(self, text="Organization Login", command=self.org_login).grid(row=7, column=0, sticky=W, pady=5)
-        ttk.Button(self, text="Organization Sign Up", command=self.org_signup_prompt).grid(row=7, column=1, sticky=E, pady=5)
+        # Removed org_name_entry for login, keeping it for signup dialog only
+        # ttk.Label(self, text="Org Name:").grid(row=6, column=0, sticky=W, pady=2)
+        # self.org_name_entry = ttk.Entry(self)
+        # self.org_name_entry.grid(row=6, column=1, sticky=(W, E), pady=2) # Used for signup, and for login to differentiate
+        ttk.Button(self, text="Organization Login", command=self.org_login).grid(row=7, column=0, sticky=W, pady=5) # Adjusted row
+        ttk.Button(self, text="Organization Sign Up", command=self.org_signup_prompt).grid(row=7, column=1, sticky=E, pady=5) # Adjusted row
 
         for child in self.winfo_children():
             child.grid_configure(padx=5, pady=5)
@@ -173,24 +174,26 @@ class AuthPage(ttk.Frame):
     def org_login(self):
         global CURRENT_USER_TYPE, CURRENT_USER_ID, CURRENT_ORG_NAME
         org_id = self.org_id_entry.get().strip()
-        org_name = self.org_name_entry.get().strip() # Use org_name for verification
+        # Removed org_name from login check as requested
+        # org_name = self.org_name_entry.get().strip()
 
-        if not all([org_id, org_name]):
-            messagebox.showerror("Login Error", "Please enter Org ID and Org Name.")
+        if not org_id: # Only check org_id
+            messagebox.showerror("Login Error", "Please enter Org ID.")
             return
 
         # No need to call connect_db here, it's already connected at app start
         try:
-            cursor.execute("SELECT org_id, org_name FROM organization WHERE org_id = %s AND org_name = %s", (org_id, org_name))
+            # Query only by org_id
+            cursor.execute("SELECT org_id, org_name FROM organization WHERE org_id = %s", (org_id,))
             org_info = cursor.fetchone()
             if org_info:
                 CURRENT_USER_TYPE = 'organization'
                 CURRENT_USER_ID = org_id
-                CURRENT_ORG_NAME = org_name # Store the organization name
-                messagebox.showinfo("Login Success", f"Welcome, {org_info[1]} (Organization)!")
+                CURRENT_ORG_NAME = org_info[1] # Store the organization name from the database
+                messagebox.showinfo("Login Success", f"Welcome, {CURRENT_ORG_NAME} (Organization)!")
                 self.app.show_organization_menu()
             else:
-                messagebox.showerror("Login Failed", "Invalid Org ID or Org Name. Please try again.")
+                messagebox.showerror("Login Failed", "Invalid Org ID. Please try again.")
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to login: {err}")
         # No finally block to disconnect_db, connection is persistent
@@ -236,6 +239,9 @@ class AuthPage(ttk.Frame):
             except mysql.connector.Error as err:
                 messagebox.showerror("Database Error", f"Failed to sign up: {err}")
             # No finally block to disconnect_db, connection is persistent
+
+        # ADDED: Sign Up button for Organization Sign Up dialog
+        ttk.Button(signup_window, text="Sign Up", command=perform_signup).grid(row=len(labels), column=0, columnspan=2, pady=10)
 
 
 # --- Base Page Class ---
