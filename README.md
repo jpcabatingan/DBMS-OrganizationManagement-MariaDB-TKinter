@@ -1,8 +1,8 @@
-**Group No.** Group 4
-**Section** CMSC 127 ST1-4L
-**Member** Banasihan, Angela
-**Member** Cabatingan, Joanne Maryz
-**Member** Doroja, Kristina
+**Group No.** Group 4 <br/>
+**Section** CMSC 127 ST1-4L <br/>
+**Member** Banasihan, Angela <br/>
+**Member** Cabatingan, Joanne Maryz <br/>
+**Member** Doroja, Kristina <br/>
 
 # Installation Guide
 
