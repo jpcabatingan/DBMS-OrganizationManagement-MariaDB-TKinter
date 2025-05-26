@@ -25,12 +25,12 @@ CREATE TABLE IF NOT EXISTS member(
     batch INT
 );
 
-CREATE TABLE organization(
+CREATE TABLE IF NOT EXISTS organization(
     org_name VARCHAR(50) PRIMARY KEY, 
     no_of_members INT
 );
 
-CREATE TABLE fee(
+CREATE TABLE IF NOT EXISTS fee(
     receipt_no VARCHAR(10) PRIMARY KEY,
     amount DECIMAL(10,2) NOT NULL, 
     payment_deadline DATE NOT NULL, 
@@ -42,7 +42,7 @@ CREATE TABLE fee(
     FOREIGN KEY (org_name) REFERENCES organization (org_name) ON DELETE CASCADE
 );
 
-CREATE TABLE serves(
+CREATE TABLE IF NOT EXISTS serves(
     student_no VARCHAR(10),
     org_name VARCHAR(50),
     academic_year VARCHAR(10),
