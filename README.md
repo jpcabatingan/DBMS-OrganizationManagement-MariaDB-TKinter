@@ -8,7 +8,6 @@
 1. Install Python
 2. Install pip
 3. Install mysqlconnect `pip install mysql-connector-python`
-<!-- 4. Instal Pillow `pip install Pillow` -->
 
 # How to Use
 In MariaDB Terminal
