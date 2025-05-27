@@ -85,7 +85,7 @@ class AddNewMemberPage(BasePage):
             return
 
         if not re.match(r"^\d{4}-\d{4}$", academic_year):
-            messagebox.showerror("Validation Error", "Academic Year must be inYYYY-YYYY format (e.g., 2023-2024).")
+            messagebox.showerror("Validation Error", "Academic Year must be in YYYY-YYYY format (e.g., 2023-2024).")
             return
         
         try:
@@ -114,18 +114,41 @@ class AddNewMemberPage(BasePage):
             return
 
         try:
-            insert_query = """
+            insert_serves_query = """
             INSERT INTO serves (student_no, org_name, academic_year, semester, role, status, committee, batch_membership)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
 
-            rows_affected = execute_query(insert_query, (student_no, org_name, academic_year, semester, role, status, committee, batch_membership_int))
+            rows_affected = execute_query(insert_serves_query, (student_no, org_name, academic_year, semester, role, status, committee, batch_membership_int))
 
             if rows_affected > 0:
+                # membership fee
+                membership_fee_amount = 250
+                payment_status = "Unpaid" 
+
+                insert_fee_query = """
+                INSERT INTO fees (student_no, org_name, academic_year, semester, amount, payment_status)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """
+
+                fee_exists = fetch_one(
+                    "SELECT fee_id FROM fees WHERE student_no = %s AND org_name = %s AND academic_year = %s AND semester = %s",
+                    (student_no, org_name, academic_year, semester)
+                )
+
+                if not fee_exists:
+                    fee_rows_affected = execute_query(insert_fee_query, (student_no, org_name, academic_year, semester, membership_fee_amount, payment_status))
+                    if fee_rows_affected > 0:
+                        messagebox.showinfo("Success", "Member added to organization and membership fee automatically added!")
+                    else:
+                        messagebox.showwarning("Warning", "Member added, but failed to automatically add membership fee. Please add it manually.")
+                else:
+                     messagebox.showwarning("Warning", "Member added, but a membership fee for this period already exists. Skipping fee creation.")
+
                 if status == 'Active':
                     execute_query("UPDATE organization SET no_of_members = no_of_members + 1 WHERE org_id = %s", (self.app.current_user_id,))
                 
-                messagebox.showinfo("Success", "Member added to organization successfully!")
+                # clear fields after adding new member
                 for entry in self.entries.values():
                     entry.delete(0, tk.END)
                 for dropdown in self.dropdowns.values():
@@ -171,8 +194,8 @@ class EditMembershipStatusPage(BasePage):
         tk.Label(self.left_panel, text="Format: 20XX-XXXXX", font=("Arial", 8), fg="grey", bg="#f0f0f0").grid(row=3, column=0, sticky="w", pady=(0, 10))
 
         load_member_button = tk.Button(self.left_panel, text="Load Member Info",
-                                       bg="#446EE2", fg="white", font=("Arial", 10, BOLD), relief="flat",
-                                       padx=10, pady=5, command=self.load_member_info)
+                                        bg="#446EE2", fg="white", font=("Arial", 10, BOLD), relief="flat",
+                                        padx=10, pady=5, command=self.load_member_info)
         load_member_button.grid(row=4, column=0, sticky="w", pady=(10, 20))
 
         tk.Label(self.left_panel, text="Member Information", font=("Arial", 14, BOLD), bg="#f0f0f0", fg="black").grid(row=5, column=0, sticky="w", pady=(10, 10))
@@ -200,8 +223,8 @@ class EditMembershipStatusPage(BasePage):
         self.right_panel.grid_columnconfigure(0, weight=1)
 
         edit_existing_button = tk.Button(self.right_panel, text="Edit existing membership status",
-                                         bg="#FF9800", fg="white", font=("Arial", 10, BOLD), relief="flat",
-                                         padx=10, pady=5, command=self.show_edit_section)
+                                            bg="#FF9800", fg="white", font=("Arial", 10, BOLD), relief="flat",
+                                            padx=10, pady=5, command=self.show_edit_section)
         edit_existing_button.grid(row=0, column=0, sticky="e", pady=(0, 20))
 
 
@@ -226,10 +249,8 @@ class EditMembershipStatusPage(BasePage):
         add_new_semester_button = tk.Button(self.right_panel, text="+ Add new semester membership",
                                              bg="#FF9800", fg="white", font=("Arial", 10, BOLD), relief="flat",
                                              padx=10, pady=5, command=self.add_new_semester_membership)
-        # Adjusted row for the button due to new Batch Membership field
         add_new_semester_button.grid(row=9, column=0, sticky="e", pady=(10, 40))
 
-        # Adjusted row for update_section_frame due to new Batch Membership field
         self.update_section_frame = tk.Frame(self.right_panel, bg="#f0f0f0")
         self.update_section_frame.grid(row=10, column=0, sticky="ew", pady=(10, 0))
         self.update_section_frame.grid_columnconfigure(0, weight=1)
@@ -243,8 +264,8 @@ class EditMembershipStatusPage(BasePage):
         self.new_committee_var = tk.StringVar(self.update_section_frame)
 
         self.new_role_dropdown = ttk.Combobox(self.update_section_frame, textvariable=self.new_role_var,
-                                              values=["Member", "President", "Vice President", "Secretary", "Treasurer", "Auditor", "EAC Chairperson", "SCC Chairperson", "MC Chairperson", "Finance Chairperson", "Secretariat Chairperson"],
-                                              state="readonly", font=("Arial", 12))
+                                                values=["Member", "President", "Vice President", "Secretary", "Treasurer", "Auditor", "EAC Chairperson", "SCC Chairperson", "MC Chairperson", "Finance Chairperson", "Secretariat Chairperson"],
+                                                state="readonly", font=("Arial", 12))
         self.new_role_dropdown.grid(row=1, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
         self.new_role_var.set("<New Role>")
 
@@ -255,14 +276,14 @@ class EditMembershipStatusPage(BasePage):
         self.new_status_var.set("<New Status>")
 
         self.new_committee_dropdown = ttk.Combobox(self.update_section_frame, textvariable=self.new_committee_var,
-                                                  values=["General", "Executive", "Internal Academics", "External Academics", "Secretariat", "Finance", "Socio-Cultural", "Membership", "Logistics", "Publicity"],
-                                                  state="readonly", font=("Arial", 12))
+                                                    values=["General", "Executive", "Internal Academics", "External Academics", "Secretariat", "Finance", "Socio-Cultural", "Membership", "Logistics", "Publicity"],
+                                                    state="readonly", font=("Arial", 12))
         self.new_committee_dropdown.grid(row=3, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
         self.new_committee_var.set("<New Committee>")
 
         save_edits_button = tk.Button(self.update_section_frame, text="Save Edits",
-                                      bg="#446EE2", fg="white", font=("Arial", 10, BOLD), relief="flat",
-                                      padx=10, pady=5, command=self.save_edits)
+                                        bg="#446EE2", fg="white", font=("Arial", 10, BOLD), relief="flat",
+                                        padx=10, pady=5, command=self.save_edits)
         save_edits_button.grid(row=4, column=0, columnspan=2, sticky="w", pady=(20, 0))
 
         self.hide_update_section()
@@ -398,7 +419,7 @@ class EditMembershipStatusPage(BasePage):
             self.new_committee_var.set(selected_membership['committee'])
             self.batch_membership_entry.delete(0, tk.END)
             self.batch_membership_entry.insert(0, str(selected_membership['batch_membership']))
-            self.batch_membership_entry.config(state='readonly')
+            self.batch_membership_entry.config(state='readonly') 
             
             self.show_update_section(f"Update Information for AY {academic_year_input} {semester_input}")
             self.editing_academic_year = academic_year_input
@@ -460,7 +481,7 @@ class EditMembershipStatusPage(BasePage):
         self.editing_semester = semester_input
         self.editing_batch_membership = batch_membership_int 
         self.is_adding_new = True
-        self.batch_membership_entry.config(state='normal') 
+        self.batch_membership_entry.config(state='normal')
 
     # save edits
     def save_edits(self):
@@ -483,7 +504,7 @@ class EditMembershipStatusPage(BasePage):
 
         academic_year = self.editing_academic_year
         semester = self.editing_semester
-        batch_membership = getattr(self, 'editing_batch_membership', None)
+        batch_membership = getattr(self, 'editing_batch_membership', None) 
 
         org_details = fetch_one("SELECT org_name FROM organization WHERE org_id = %s", (self.app.current_user_id,))
         if not org_details:
@@ -496,17 +517,38 @@ class EditMembershipStatusPage(BasePage):
                 messagebox.showerror("Input Error", "Batch Membership is required for new membership.")
                 return
 
-            insert_query = """
+            insert_serves_query = """
             INSERT INTO serves (student_no, org_name, academic_year, semester, role, status, committee, batch_membership)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
-            rows_affected = execute_query(insert_query, (student_no, current_org_name, academic_year, semester, new_role, new_status, new_committee, batch_membership))
+            rows_affected = execute_query(insert_serves_query, (student_no, current_org_name, academic_year, semester, new_role, new_status, new_committee, batch_membership))
+            
+            # base membership fee
             if rows_affected > 0:
+                membership_fee_amount = 250
+                payment_status = "Unpaid"
+
+                fee_exists = fetch_one(
+                    "SELECT fee_id FROM fees WHERE student_no = %s AND org_name = %s AND academic_year = %s AND semester = %s",
+                    (student_no, current_org_name, academic_year, semester)
+                )
+                if not fee_exists:
+                    insert_fee_query = """
+                    INSERT INTO fees (student_no, org_name, academic_year, semester, amount, payment_status)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    """
+                    fee_rows_affected = execute_query(insert_fee_query, (student_no, current_org_name, academic_year, semester, membership_fee_amount, payment_status))
+                    if fee_rows_affected > 0:
+                        messagebox.showinfo("Success", f"New membership for AY {academic_year} {semester} added and fee automatically added!")
+                    else:
+                        messagebox.showwarning("Warning", f"New membership for AY {academic_year} {semester} added, but failed to automatically add membership fee. Please add it manually.")
+                else:
+                    messagebox.showwarning("Warning", f"New membership for AY {academic_year} {semester} added, but a membership fee for this period already exists. Skipping fee creation.")
+                
                 if new_status == 'Active':
                     execute_query("UPDATE organization SET no_of_members = no_of_members + 1 WHERE org_id = %s", (self.app.current_user_id,))
                 
-                messagebox.showinfo("Success", f"New membership for AY {academic_year} {semester} added successfully!")
-                self.load_member_info()
+                self.load_member_info() 
                 self.is_adding_new = False
                 self.batch_membership_entry.config(state='normal') 
                 self.batch_membership_entry.delete(0, tk.END)
@@ -532,7 +574,6 @@ class EditMembershipStatusPage(BasePage):
                         execute_query("UPDATE organization SET no_of_members = no_of_members + 1 WHERE org_id = %s", (self.app.current_user_id,))
                     elif new_status != 'Active' and old_status == 'Active':
                         execute_query("UPDATE organization SET no_of_members = no_of_members - 1 WHERE org_id = %s", (self.app.current_user_id,))
-
 
                 messagebox.showinfo("Success", f"Membership for AY {academic_year} {semester} updated successfully!")
                 self.load_member_info()

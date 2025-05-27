@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from tkinter.font import BOLD
 import datetime
+import re
 
 # import shared_variables classes
 from shared_variables import BasePage, execute_query, fetch_one, fetch_all
@@ -17,16 +18,35 @@ class OrganizationMenuPage(BasePage):
 
     # org menu
     def create_org_menu_layout(self):
+        # Clear existing widgets
         for widget in self.winfo_children():
-            if isinstance(widget, ttk.Label) and widget.cget("text") == "":
-                widget.destroy()
+            widget.destroy()
 
-        self.grid_rowconfigure(0, weight=0)
-        self.grid_rowconfigure(1, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=0)
+        # Create a Canvas and a Scrollbar for the entire page
+        self.canvas = tk.Canvas(self, borderwidth=0, background="#f0f0f0")
+        self.vertical_scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.vertical_scrollbar.set)
 
-        self.header_frame = ttk.Frame(self, style='AuthPanel.TFrame', padding="15")
+        self.vertical_scrollbar.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        # Create a frame inside the canvas to hold all content
+        self.scrollable_frame = ttk.Frame(self.canvas)
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+
+        # Configure the scrollable frame to expand with the canvas
+        self.scrollable_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        
+        # Configure canvas scrolling for mouse wheel
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+
+
+        self.scrollable_frame.grid_rowconfigure(0, weight=0)
+        self.scrollable_frame.grid_rowconfigure(1, weight=1)
+        self.scrollable_frame.grid_columnconfigure(0, weight=1)
+        self.scrollable_frame.grid_columnconfigure(1, weight=0)
+
+        self.header_frame = ttk.Frame(self.scrollable_frame, style='AuthPanel.TFrame', padding="15")
         self.header_frame.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E), padx=10, pady=10, columnspan=2)
         self.header_frame.grid_columnconfigure(0, weight=0)
         self.header_frame.grid_columnconfigure(1, weight=1)
@@ -45,11 +65,11 @@ class OrganizationMenuPage(BasePage):
 
         ttk.Button(self.header_frame, text="Log Out", command=self.app.logout).grid(row=0, column=2, sticky=tk.NE, padx=10, pady=5)
 
-        self.notebook = ttk.Notebook(self)
+        self.notebook = ttk.Notebook(self.scrollable_frame)
         self.notebook.grid(row=1, column=0, sticky=(tk.N, tk.W, tk.E, tk.S), padx=10, pady=10, columnspan=2)
-        self.grid_rowconfigure(1, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=0)
+        self.scrollable_frame.grid_rowconfigure(1, weight=1)
+        self.scrollable_frame.grid_columnconfigure(0, weight=1)
+        self.scrollable_frame.grid_columnconfigure(1, weight=0)
 
         self.member_tab = ttk.Frame(self.notebook, padding="15")
         self.notebook.add(self.member_tab, text="Manage Members")
@@ -62,6 +82,9 @@ class OrganizationMenuPage(BasePage):
         self.fees_tab = ttk.Frame(self.notebook, padding="15")
         self.notebook.add(self.fees_tab, text="Manage Finances")
         self.create_fees_tab_widgets()
+
+    def _on_mousewheel(self, event):
+        self.canvas.yview_scroll(-1*(event.delta//120), "units")
 
     # fees tab
     def create_fees_tab_widgets(self):
@@ -89,7 +112,7 @@ class OrganizationMenuPage(BasePage):
     def get_active_members_count_for_current_semester(self, academic_year, semester):
         count_record = fetch_one(
             """
-            SELECT COUNT(DISTINCT student_no) AS member_count  -- <--- Add AS alias_name
+            SELECT COUNT(DISTINCT student_no) AS member_count 
             FROM serves
             WHERE org_name = %s
                 AND academic_year = %s
@@ -174,9 +197,21 @@ class OrganizationMenuPage(BasePage):
 
         self.percentage_result_label = ttk.Label(active_percentage_frame, text="")
         self.percentage_result_label.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
+        
+        alumni_report_frame = ttk.LabelFrame(left_panel, text="Alumni Report", padding="10")
+        alumni_report_frame.grid(row=3, column=0, sticky=(tk.N, tk.W, tk.E), columnspan=2, pady=(10, 0))
+        alumni_report_frame.grid_columnconfigure(0, weight=1)
+        alumni_report_frame.grid_columnconfigure(1, weight=1)
+
+        ttk.Label(alumni_report_frame, text="As of Academic Year:").grid(row=0, column=0, sticky=tk.W, pady=2)
+        self.alumni_academic_year_entry = ttk.Entry(alumni_report_frame)
+        self.alumni_academic_year_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=2)
+        self.alumni_academic_year_entry.insert(0, "YYYY-YYYY")
+
+        ttk.Button(alumni_report_frame, text="View Alumni", command=self.view_alumni_members, style='Login.TButton').grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
 
         tree_frame = ttk.Frame(self.member_tab)
-        tree_frame.grid(row=0, column=1, sticky=(tk.N, tk.W, tk.E, tk.S), padx=10, pady=10, rowspan=3)
+        tree_frame.grid(row=0, column=1, sticky=(tk.N, tk.W, tk.E, tk.S), padx=10, pady=10, rowspan=4) 
         tree_frame.grid_rowconfigure(0, weight=1)
         tree_frame.grid_columnconfigure(0, weight=1)
 
@@ -191,7 +226,9 @@ class OrganizationMenuPage(BasePage):
         member_list_scrollbar_x.grid(row=1, column=0, sticky=(tk.W, tk.E))
         self.member_list_tree.configure(xscrollcommand=member_list_scrollbar_x.set)
 
+        # Initialize with default columns
         self.set_default_treeview_columns()
+        # Populate with initial data based on filters
         self.apply_filters_and_generate_report()
 
     def set_default_treeview_columns(self):
@@ -201,13 +238,32 @@ class OrganizationMenuPage(BasePage):
         anchors = (tk.CENTER, tk.W, tk.W, tk.CENTER, tk.CENTER, tk.CENTER, tk.CENTER, tk.W, tk.CENTER, tk.W)
         self.set_treeview_columns(self.member_list_tree, columns, headings, widths, anchors)
 
-    def clear_treeview(self, tree):
+    def clear_treeview_items(self, tree):
+        # Only delete items, do not touch column definitions here
         for i in tree.get_children():
             tree.delete(i)
 
     def set_treeview_columns(self, tree, columns, headings, widths, anchors):
+        # Clear all existing items in the treeview
+        self.clear_treeview_items(tree) 
+
+        # IMPORTANT: Explicitly delete old column definitions to prevent conflicts
+        # Iterate over the current columns and remove their definitions
+        if tree["columns"]: # Check if there are any columns defined
+            for col in tree["columns"]:
+                try:
+                    tree.heading(col, text="") # Clear heading text
+                    tree.column(col, width=0) # Set width to 0 to hide it
+                except tk.TclError:
+                    # This can happen if a column is referenced but not fully defined,
+                    # or if it's the "#0" column which can't be modified this way.
+                    pass 
+        
+        # Then, set the new columns
         tree["columns"] = columns
-        tree["displaycolumns"] = columns
+        tree["displaycolumns"] = columns # Ensure all defined columns are displayed
+
+        # Configure headings and column properties for the new columns
         for col, heading in zip(columns, headings):
             tree.heading(col, text=heading)
         for col, width, anchor in zip(columns, widths, anchors):
@@ -215,8 +271,9 @@ class OrganizationMenuPage(BasePage):
 
     # based on the specified categories, get members that satisfy the rules
     def apply_filters_and_generate_report(self):
-        self.clear_treeview(self.member_list_tree)
-        self.set_default_treeview_columns()
+        # Ensure default columns are set and items cleared.
+        # set_treeview_columns already includes item clearing.
+        self.set_default_treeview_columns() 
 
         query = """
         SELECT
@@ -272,15 +329,28 @@ class OrganizationMenuPage(BasePage):
 
         if records:
             for record in records:
-                self.member_list_tree.insert("", "end", values=tuple(record.values()))
+                values_to_insert = (
+                    record.get('student_no', ''),
+                    record.get('full_name', ''),
+                    record.get('degree_program', ''),
+                    record.get('gender', ''),
+                    record.get('batch', ''),
+                    record.get('academic_year', ''),
+                    record.get('semester', ''),
+                    record.get('role', ''),
+                    record.get('status', ''),
+                    record.get('committee', '')
+                )
+                self.member_list_tree.insert("", "end", values=values_to_insert)
         else:
+            # When no records are found, insert a message.
+            # The columns are already set by set_default_treeview_columns()
             columns = ("Student No", "Full Name", "Degree Program", "Gender", "Batch", "Academic Year", "Semester", "Role", "Status", "Committee")
             self.member_list_tree.insert("", "end", values=("No members found matching criteria.",) + ("",) * (len(columns) - 1))
 
     # get active members
     def generate_active_members_only_report(self):
-        self.clear_treeview(self.member_list_tree)
-        self.set_default_treeview_columns()
+        self.set_default_treeview_columns() # This will clear items and reset to default columns
 
         academic_year, semester = self.get_current_academic_period()
         if not academic_year or not semester:
@@ -310,7 +380,19 @@ class OrganizationMenuPage(BasePage):
 
         if records:
             for record in records:
-                self.member_list_tree.insert("", "end", values=tuple(record.values()))
+                values_to_insert = (
+                    record.get('student_no', ''),
+                    record.get('full_name', ''),
+                    record.get('degree_program', ''),
+                    record.get('gender', ''),
+                    record.get('batch', ''),
+                    record.get('academic_year', ''),
+                    record.get('semester', ''),
+                    record.get('role', ''),
+                    record.get('status', ''),
+                    record.get('committee', '')
+                )
+                self.member_list_tree.insert("", "end", values=values_to_insert)
         else:
             columns = ("Student No", "Full Name", "Degree Program", "Gender", "Batch", "Academic Year", "Semester", "Role", "Status", "Committee")
             self.member_list_tree.insert("", "end", values=(f"No active members for {academic_year} {semester}.",) + ("",) * (len(columns) - 1))
@@ -371,14 +453,14 @@ class OrganizationMenuPage(BasePage):
         for record in semesters_to_consider:
             ay, sem = record['academic_year'], record['semester']
             active_count_record = fetch_one("""
-                SELECT COUNT(DISTINCT student_no) AS active_count -- <--- Add AS alias_name
+                SELECT COUNT(DISTINCT student_no) AS active_count 
                 FROM serves
                 WHERE org_name = %s AND academic_year = %s AND semester = %s AND status = 'Active';
                 """, (self.app.current_org_name, ay, sem))
             active_count = active_count_record['active_count'] if active_count_record else 0
 
             inactive_count_record = fetch_one("""
-                SELECT COUNT(DISTINCT student_no) AS inactive_count -- <--- Add AS alias_name
+                SELECT COUNT(DISTINCT student_no) AS inactive_count 
                 FROM serves
                 WHERE org_name = %s AND academic_year = %s AND semester = %s AND status != 'Active';
                 """, (self.app.current_org_name, ay, sem))
@@ -398,3 +480,71 @@ class OrganizationMenuPage(BasePage):
             result_text = "No member data found for the specified semesters."
 
         self.percentage_result_label.config(text=result_text)
+
+    # View all alumni members of a given organization as of a given date.
+    def view_alumni_members(self):
+        # Columns for the alumni report
+        alumni_columns = ("Student No", "First Name", "Middle Name", "Last Name", "Batch",
+                          "Org Name", "Role", "Committee", "Academic Year", "Status")
+        alumni_headings = ("Student No.", "First Name", "M.I.", "Last Name", "Batch",
+                           "Organization", "Role", "Committee", "Academic Year", "Status")
+        alumni_widths = (100, 120, 60, 120, 70, 150, 100, 120, 100, 80)
+        alumni_anchors = (tk.CENTER, tk.W, tk.CENTER, tk.W, tk.CENTER, tk.W, tk.W, tk.W, tk.CENTER, tk.CENTER)
+        
+        # This will now clear items and redefine columns correctly
+        self.set_treeview_columns(self.member_list_tree, alumni_columns, alumni_headings, alumni_widths, alumni_anchors)
+
+
+        academic_year_input = self.alumni_academic_year_entry.get().strip()
+
+        if not academic_year_input or academic_year_input == "YYYY-YYYY":
+            messagebox.showerror("Input Error", "Please enter an Academic Year (e.g., 2023-2024).")
+            return
+
+        if not re.match(r"^\d{4}-\d{4}$", academic_year_input):
+            messagebox.showerror("Validation Error", "Academic Year must be in YYYY-YYYY format (e.g., 2023-2024).")
+            return
+
+        current_org_name = self.app.current_org_name
+
+        try:
+            query = """
+            SELECT
+                m.student_no,
+                m.first_name,
+                m.middle_name,
+                m.last_name,
+                m.batch,
+                s.org_name,
+                s.role,
+                s.committee,
+                s.academic_year,
+                s.status
+            FROM member m
+            JOIN serves s ON m.student_no = s.student_no
+            WHERE s.org_name = %s
+                AND s.academic_year < %s
+                AND s.status = 'Alumni'
+            ORDER BY s.academic_year DESC, m.last_name, m.first_name;
+            """
+            alumni_members = fetch_all(query, (current_org_name, academic_year_input))
+
+            if alumni_members:
+                for member in alumni_members:
+                    self.member_list_tree.insert("", tk.END, values=(
+                        member['student_no'],
+                        member['first_name'],
+                        member['middle_name'],
+                        member['last_name'],
+                        member['batch'],
+                        member['org_name'],
+                        member['role'],
+                        member['committee'],
+                        member['academic_year'],
+                        member['status']
+                    ))
+            else:
+                self.member_list_tree.insert("", tk.END, values=("No alumni members found for the specified criteria.",) + ("",) * (len(alumni_columns) - 1))
+                messagebox.showinfo("No Results", f"No alumni members found for {current_org_name} as of Academic Year {academic_year_input}.")
+        except Exception as e:
+            messagebox.showerror("Database Error", f"An error occurred while fetching alumni data: {e}")
