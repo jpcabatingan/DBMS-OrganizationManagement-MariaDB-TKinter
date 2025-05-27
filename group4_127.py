@@ -3,8 +3,6 @@ from mysql.connector import errorcode
 from tkinter import *
 from tkinter import ttk, messagebox, Toplevel
 from tkinter.font import BOLD
-import datetime
-from passlib.hash import pbkdf2_sha256 
 import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel
 from tkinter.font import BOLD
@@ -677,9 +675,9 @@ class AddNewMemberPage(BasePage):
                 entry.grid(row=i + 1, column=1, sticky=(W, E), padx=5, pady=2)
                 self.entries[text.replace(":", "").replace(" ", "_").lower()] = entry
 
-        self.role_options = ["Member", "Executive President", "VP Internal", "VP External", "Secretary", "Treasurer"]
-        self.status_options = ["Active", "Inactive", "Dismissed", "Alumni"]
-        self.committee_options = ["Executive", "Finance", "Logistics", "Publicity", "Internal Affairs", "External Affairs"]
+        self.role_options = ["Member", "President", "Vice President", "EAC Chairperson", "Secretary", "Finance Chairperson", "SCC Chairperson", "MC Chairperson"]
+        self.status_options = ["Active", "Inactive", "Disaffiliated", "Alumni"]
+        self.committee_options = ["Executive", "Internal Academics", "External Academics", "Secretariat", "Finance", "Socio-Cultural", "Membership"]
 
         self.role_combobox = ttk.Combobox(self, values=self.role_options, state="readonly")
         self.role_combobox.grid(row=4, column=1, sticky=(W, E), padx=5, pady=2)
