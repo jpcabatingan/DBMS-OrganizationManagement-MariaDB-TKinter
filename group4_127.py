@@ -894,6 +894,28 @@ class AddNewMemberPage(BasePage):
                 entry.grid(row=i + 1, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
                 self.entries[text.replace(":", "").replace(" ", "_").lower()] = entry
 
+
+        self.role_options = ["Member", "President", "Vice President", "EAC Chairperson", "Secretary", "Finance Chairperson", "SCC Chairperson", "MC Chairperson"]
+        self.status_options = ["Active", "Inactive", "Expelled", "Suspended", "Alumni"]
+        self.committee_options = ["Executive", "Internal Academics", "External Academics", "Secretariat", "Finance", "Socio-Cultural", "Membership"]
+
+        self.role_combobox = ttk.Combobox(self, values=self.role_options, state="readonly")
+        self.role_combobox.grid(row=4, column=1, sticky=(W, E), padx=5, pady=2)
+        self.role_combobox.set("Member")
+        self.entries['role'] = self.role_combobox
+
+        self.status_combobox = ttk.Combobox(self, values=self.status_options, state="readonly")
+        self.status_combobox.grid(row=5, column=1, sticky=(W, E), padx=5, pady=2)
+        self.status_combobox.set("Active")
+        self.entries['status'] = self.status_combobox
+
+        self.committee_combobox = ttk.Combobox(self, values=self.committee_options, state="readonly")
+        self.committee_combobox.grid(row=6, column=1, sticky=(W, E), padx=5, pady=2)
+        self.committee_combobox.set("Executive")
+        self.entries['committee'] = self.committee_combobox
+
+
+
         ttk.Button(self, text="Add Member", command=self.add_member).grid(row=len(labels) + 1, column=0, columnspan=2, pady=10)
 
     def add_member(self):
