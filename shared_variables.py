@@ -102,6 +102,8 @@ class BasePage(tk.Frame):
         # Now access current user type from the app_instance
         if self.app.current_user_type == 'organization' and self.app.current_org_name:
             self.app.show_organization_menu()
+        elif self.app.current_user_type == 'member': 
+            self.app.show_member_menu()
         elif self.app.current_user_type == 'admin':
             # Assuming you have an admin menu method in App
             # self.app.show_admin_menu() 
