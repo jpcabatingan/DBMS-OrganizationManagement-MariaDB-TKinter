@@ -176,7 +176,7 @@ class AuthPage(ttk.Frame):
         ttk.Label(org_panel, text="Organization ID", font=("Arial", 10, BOLD)).grid(row=6, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
         self.signup_org_id_entry = ttk.Entry(org_panel, font=("Arial", 12))
         self.signup_org_id_entry.grid(row=7, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
-        ttk.Label(org_panel, text="Format: XXXXX", font=("Arial", 8), foreground='grey').grid(row=8, column=0, columnspan=2, sticky=tk.W, pady=(0, 20))
+        ttk.Label(org_panel, text="Format: XXXX", font=("Arial", 8), foreground='grey').grid(row=8, column=0, columnspan=2, sticky=tk.W, pady=(0, 20))
 
         ttk.Label(org_panel, text="Organization Name", font=("Arial", 10, BOLD)).grid(row=9, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
         self.signup_org_name_entry = ttk.Entry(org_panel, font=("Arial", 12))
