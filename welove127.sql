@@ -50,7 +50,8 @@ CREATE TABLE IF NOT EXISTS serves(
     semester VARCHAR(20) NOT NULL,   
     role VARCHAR(50),                
     status VARCHAR(10),             
-    committee VARCHAR(50),          
+    committee VARCHAR(50),
+    batch_membership INT,          
     PRIMARY KEY(student_no, org_name, academic_year, semester),
     FOREIGN KEY(student_no) REFERENCES member(student_no) ON DELETE CASCADE,
     FOREIGN KEY (org_name) REFERENCES organization (org_name) ON DELETE CASCADE

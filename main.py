@@ -73,6 +73,7 @@ class AuthPage(ttk.Frame):
         self.signup_middle_name_entry.grid(row=13, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
         ttk.Label(member_panel, text="Optional", font=("Arial", 8), foreground='grey').grid(row=14, column=0, sticky=tk.W, pady=(0, 10))
 
+        # RE-ADDED BATCH TO MEMBER SIGNUP
         ttk.Label(member_panel, text="Batch", font=("Arial", 10, BOLD)).grid(row=12, column=1, sticky=tk.W, pady=(10, 0))
         self.signup_batch_entry = ttk.Entry(member_panel, font=("Arial", 12))
         self.signup_batch_entry.grid(row=13, column=1, sticky=(tk.W, tk.E), pady=(0, 5))
@@ -148,7 +149,6 @@ class AuthPage(ttk.Frame):
 
 
     def member_login(self):
-        # Access attributes of the app instance
         student_no = self.member_student_no_entry.get().strip()
         if not student_no:
             messagebox.showerror("Login Error", "Please enter a Student Number.")
@@ -170,8 +170,9 @@ class AuthPage(ttk.Frame):
         last_name = self.signup_last_name_entry.get().strip()
         degree_program = self.signup_degree_program_entry.get().strip()
         gender = self.signup_gender_combobox.get().strip()
-        batch = self.signup_batch_entry.get().strip()
+        batch = self.signup_batch_entry.get().strip() # RE-ADDED BATCH
 
+        # ADDED BATCH TO VALIDATION
         if not all([student_no, first_name, last_name, degree_program, gender, batch]):
             messagebox.showerror("Input Error", "Please fill in all required fields (Student No, First Name, Last Name, Degree Program, Gender, Batch).")
             return
@@ -180,6 +181,7 @@ class AuthPage(ttk.Frame):
             messagebox.showerror("Validation Error", "Student number format is incorrect. Expected: 20XX-XXXXX")
             return
         
+        # RE-ADDED BATCH INT CONVERSION
         try:
             batch_int = int(batch)
         except ValueError:
@@ -194,6 +196,7 @@ class AuthPage(ttk.Frame):
         INSERT INTO member (student_no, first_name, middle_name, last_name, degree_program, gender, batch)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
+        # RE-ADDED BATCH TO INSERT PARAMETERS
         rows_affected = execute_query(insert_query, (student_no, first_name, middle_name if middle_name else None, last_name, degree_program, gender, batch_int))
         
         if rows_affected > 0:
@@ -204,13 +207,13 @@ class AuthPage(ttk.Frame):
             self.signup_last_name_entry.delete(0, tk.END)
             self.signup_degree_program_entry.delete(0, tk.END)
             self.signup_gender_combobox.set("F")
+            # RE-ADDED BATCH TO CLEARING
             self.signup_batch_entry.delete(0, tk.END)
         else:
             messagebox.showerror("Signup Error", "Failed to register member.")
 
 
     def org_login(self):
-        # Access attributes of the app instance
         org_id = self.org_id_entry.get().strip()
 
         if not org_id:
@@ -221,7 +224,7 @@ class AuthPage(ttk.Frame):
         if org_info:
             self.app.current_user_type = 'organization'
             self.app.current_user_id = org_id
-            self.app.current_org_name = org_info['org_name'] # Set the app attribute
+            self.app.current_org_name = org_info['org_name']
             messagebox.showinfo("Login Success", f"Welcome, {self.app.current_org_name} (Organization)!")
             self.app.show_organization_menu()
         else:
@@ -265,7 +268,6 @@ class App(tk.Tk):
 
         self.current_page = None
         self.pages = {}
-        # Initialize user/org specific attributes here
         self.current_user_type = None
         self.current_user_id = None
         self.current_org_name = None
@@ -283,8 +285,7 @@ class App(tk.Tk):
         page_class = self.pages.get(page_class_name)
 
         if page_class:
-            # Pass self as app_instance to all pages
-            self.current_page = page_class(self, self, *args)
+            self.current_page = page_class(self, self, *args) 
             self.current_page.tkraise()
         else:
             messagebox.showerror("Navigation Error", f"Page class '{page_class_name}' not found.")
@@ -315,7 +316,7 @@ class App(tk.Tk):
 
     def show_organization_menu(self):
         self.pages['OrganizationMenuPage'] = OrganizationMenuPage
-        self.show_page('OrganizationMenuPage', self.current_org_name) # Pass the attribute
+        self.show_page('OrganizationMenuPage', self.current_org_name)
 
     def show_add_new_member_page(self):
         self.pages['AddNewMemberPage'] = AddNewMemberPage
@@ -326,10 +327,6 @@ class App(tk.Tk):
         self.show_page('EditMembershipStatusPage')
 
     def show_org_fees_page(self):
-        # You'll need to uncomment the import first:
-        # from orgpov_fees import OrganizationFeesPage 
-        # self.pages['OrganizationFeesPage'] = OrganizationFeesPage 
-        # self.show_page('OrganizationFeesPage')
         messagebox.showinfo("Coming Soon", "Organization Fees page is not yet implemented.")
 
     def logout(self):
