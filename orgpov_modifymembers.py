@@ -5,6 +5,7 @@ from tkinter.font import BOLD
 from shared_variables import BasePage, fetch_one, fetch_all, execute_query
 import re
 
+# ADD NEW ORG MEMBER ------------------------------------------------------------
 class AddNewMemberPage(BasePage):
     def __init__(self, master, app_instance):
         super().__init__(master, app_instance, title_text="Add New Organization Member")
@@ -17,7 +18,6 @@ class AddNewMemberPage(BasePage):
 
         tk.Label(self.content_frame, text="Add New Organization Member", font=("Arial", 18, BOLD), bg="#f0f0f0").grid(row=0, column=0, columnspan=2, pady=(0, 20), sticky="w")
 
-        # ADDED BATCH MEMBERSHIP TO LABELS
         row_idx = 1
         labels = ["Student No.:", "Role:", "Status:", "Committee:", "Academic Year:", "Semester:", "Batch Membership:"]
         self.entries = {}
@@ -57,7 +57,7 @@ class AddNewMemberPage(BasePage):
                 dropdown.set("First Semester")
                 dropdown.grid(row=row_idx, column=1, sticky="ew", pady=(5, 0), padx=5)
                 self.dropdowns['semester'] = dropdown
-            elif label_text == "Batch Membership:": # ADDED BATCH MEMBERSHIP ENTRY
+            elif label_text == "Batch Membership:":
                 entry = ttk.Entry(self.content_frame, font=("Arial", 10))
                 entry.grid(row=row_idx, column=1, sticky="ew", pady=(5, 0), padx=5)
                 self.entries['batch_membership'] = entry
@@ -66,7 +66,7 @@ class AddNewMemberPage(BasePage):
 
         ttk.Button(self.content_frame, text="Add Member", command=self.add_member).grid(row=row_idx, column=0, columnspan=2, pady=20)
 
-
+    # add new member that serves the org
     def add_member(self):
         student_no = self.entries['student_no'].get().strip()
         role = self.dropdowns['role'].get().strip()
@@ -74,9 +74,8 @@ class AddNewMemberPage(BasePage):
         committee = self.dropdowns['committee'].get().strip()
         academic_year = self.entries['academic_year'].get().strip()
         semester = self.dropdowns['semester'].get().strip()
-        batch_membership = self.entries['batch_membership'].get().strip() # ADDED BATCH MEMBERSHIP EXTRACTION
+        batch_membership = self.entries['batch_membership'].get().strip()
 
-        # ADDED BATCH MEMBERSHIP TO VALIDATION
         if not all([student_no, role, status, committee, academic_year, semester, batch_membership]):
             messagebox.showerror("Input Error", "Please fill in all fields.")
             return
@@ -89,7 +88,6 @@ class AddNewMemberPage(BasePage):
             messagebox.showerror("Validation Error", "Academic Year must be inYYYY-YYYY format (e.g., 2023-2024).")
             return
         
-        # ADDED BATCH MEMBERSHIP VALIDATION
         try:
             batch_membership_int = int(batch_membership)
         except ValueError:
@@ -120,7 +118,7 @@ class AddNewMemberPage(BasePage):
             INSERT INTO serves (student_no, org_name, academic_year, semester, role, status, committee, batch_membership)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
-            # ADDED BATCH MEMBERSHIP TO INSERT PARAMETERS
+
             rows_affected = execute_query(insert_query, (student_no, org_name, academic_year, semester, role, status, committee, batch_membership_int))
 
             if rows_affected > 0:
@@ -139,7 +137,6 @@ class AddNewMemberPage(BasePage):
                         dropdown.set("General")
                     elif dropdown == self.dropdowns['semester']:
                         dropdown.set("First Semester")
-                # ADDED BATCH MEMBERSHIP TO CLEARING
                 self.entries['batch_membership'].delete(0, tk.END)
             else:
                 messagebox.showerror("Error", "Failed to add member to organization.")
@@ -147,6 +144,7 @@ class AddNewMemberPage(BasePage):
             messagebox.showerror("Database Error", f"An error occurred: {e}")
 
 
+# EDIT MEMBER'S MEMBERSHIP DETAILS ------------------------------------------------------------
 class EditMembershipStatusPage(BasePage):
     def __init__(self, master, app_instance):
         super().__init__(master, app_instance, title_text="Edit Member Membership Status")
@@ -184,7 +182,7 @@ class EditMembershipStatusPage(BasePage):
         for i, item in enumerate(info_items):
             tk.Label(self.left_panel, text=item, font=("Arial", 10, BOLD), bg="#f0f0f0").grid(row=6 + i, column=0, sticky="w", padx=5, pady=(2, 0))
             label = tk.Label(self.left_panel, text="", font=("Arial", 10), bg="#f0f0f0")
-            label.grid(row=6 + i, column=0, sticky="w", padx=90, pady=(2, 0))
+            label.grid(row=6 + i, column=0, sticky="w", padx=100, pady=(2, 0))
             self.member_info_labels[item] = label
 
         self.serves_history_frame = tk.Frame(self.left_panel, bg="#f0f0f0")
@@ -269,6 +267,7 @@ class EditMembershipStatusPage(BasePage):
 
         self.hide_update_section()
 
+    # get member details
     def load_member_info(self):
         student_no = self.student_no_entry.get().strip()
         if not student_no:
@@ -295,7 +294,6 @@ class EditMembershipStatusPage(BasePage):
                 return
             current_org_name = org_details['org_name']
 
-            # ADDED BATCH_MEMBERSHIP TO SELECT QUERY
             self.semester_memberships = fetch_all(
                 "SELECT academic_year, semester, role, status, committee, batch_membership FROM serves WHERE org_name = %s AND student_no = %s ORDER BY academic_year DESC, FIELD(semester, 'First Semester', 'Second Semester')",
                 (current_org_name, student_no)
@@ -307,6 +305,7 @@ class EditMembershipStatusPage(BasePage):
             self.clear_member_info()
             messagebox.showerror("Error", "Member not found.")
 
+    # display member's history as a member of the org
     def display_serves_history(self):
         for label in self.serves_history_labels:
             label.destroy()
@@ -336,7 +335,6 @@ class EditMembershipStatusPage(BasePage):
                 self.serves_history_labels.append(committee_label)
                 current_display_row += 1
                 
-                # ADDED BATCH_MEMBERSHIP DISPLAY
                 batch_membership_label = tk.Label(self.serves_history_frame, text=f"Batch Membership: {membership['batch_membership']}", font=("Arial", 10), bg="#f0f0f0")
                 batch_membership_label.grid(row=current_display_row, column=0, sticky="w", padx=10)
                 self.serves_history_labels.append(batch_membership_label)
@@ -349,6 +347,7 @@ class EditMembershipStatusPage(BasePage):
             no_history_label.grid(row=0, column=0, sticky="w", pady=(10,0))
             self.serves_history_labels.append(no_history_label)
 
+    # clear membership details
     def clear_member_info(self):
         self.member_data = None
         for label in self.member_info_labels.values():
@@ -362,10 +361,10 @@ class EditMembershipStatusPage(BasePage):
         self.new_committee_var.set("<New Committee>")
         
         self.hide_update_section()
-        self.batch_membership_entry.config(state='normal') # Ensure it's editable for new entries
-        self.batch_membership_entry.delete(0, tk.END) # Clear it
+        self.batch_membership_entry.config(state='normal') 
+        self.batch_membership_entry.delete(0, tk.END) 
 
-
+    # edit membership status for a given AY and Semester
     def show_edit_section(self):
         if not self.member_data:
             messagebox.showerror("Error", "Please load member info first.")
@@ -388,7 +387,6 @@ class EditMembershipStatusPage(BasePage):
             return
         current_org_name = org_details['org_name']
 
-        # ADDED BATCH_MEMBERSHIP TO SELECT QUERY
         selected_membership = fetch_one(
             "SELECT role, status, committee, batch_membership FROM serves WHERE org_name = %s AND student_no = %s AND academic_year = %s AND semester = %s",
             (current_org_name, self.member_data['student_no'], academic_year_input, semester_input)
@@ -398,11 +396,8 @@ class EditMembershipStatusPage(BasePage):
             self.new_role_var.set(selected_membership['role'])
             self.new_status_var.set(selected_membership['status'])
             self.new_committee_var.set(selected_membership['committee'])
-            # Display batch_membership in the input field when editing an existing one
             self.batch_membership_entry.delete(0, tk.END)
             self.batch_membership_entry.insert(0, str(selected_membership['batch_membership']))
-            # Make batch_membership read-only if it's not meant to be edited for existing entries
-            # since it's part of the PRIMARY KEY in serves.
             self.batch_membership_entry.config(state='readonly')
             
             self.show_update_section(f"Update Information for AY {academic_year_input} {semester_input}")
@@ -412,10 +407,10 @@ class EditMembershipStatusPage(BasePage):
         else:
             messagebox.showerror("Error", "No membership found for the specified Academic Year and Semester in this organization.")
             self.hide_update_section()
-            self.batch_membership_entry.config(state='normal') # Ensure it's editable for new entries
+            self.batch_membership_entry.config(state='normal') 
             self.batch_membership_entry.delete(0, tk.END)
 
-
+    # renew membership / add a new semester of membership
     def add_new_semester_membership(self):
         if not self.member_data:
             messagebox.showerror("Error", "Please load member info first.")
@@ -423,9 +418,8 @@ class EditMembershipStatusPage(BasePage):
 
         academic_year_input = self.academic_year_entry.get().strip()
         semester_input = self.semester_dropdown_select.get().strip()
-        batch_membership_input = self.batch_membership_entry.get().strip() # Get batch_membership for new entry
+        batch_membership_input = self.batch_membership_entry.get().strip()
 
-        # ADDED BATCH MEMBERSHIP TO VALIDATION
         if not academic_year_input or not semester_input or not batch_membership_input:
             messagebox.showerror("Input Error", "Please enter/select Academic Year, Semester, and Batch Membership for the new membership.")
             return
@@ -434,7 +428,6 @@ class EditMembershipStatusPage(BasePage):
             messagebox.showerror("Validation Error", "Academic Year format is incorrect. Expected: 20XX-XXXX")
             return
         
-        # ADDED BATCH MEMBERSHIP VALIDATION
         try:
             batch_membership_int = int(batch_membership_input)
         except ValueError:
@@ -465,11 +458,11 @@ class EditMembershipStatusPage(BasePage):
         
         self.editing_academic_year = academic_year_input
         self.editing_semester = semester_input
-        self.editing_batch_membership = batch_membership_int # Store batch_membership for new entry
+        self.editing_batch_membership = batch_membership_int 
         self.is_adding_new = True
-        self.batch_membership_entry.config(state='normal') # Ensure it's editable for new entries
+        self.batch_membership_entry.config(state='normal') 
 
-
+    # save edits
     def save_edits(self):
         if not self.member_data:
             messagebox.showerror("Error", "No member loaded to save edits for.")
@@ -490,9 +483,7 @@ class EditMembershipStatusPage(BasePage):
 
         academic_year = self.editing_academic_year
         semester = self.editing_semester
-        # Batch_membership is part of the primary key, so it's only used for new inserts.
-        # It should not be updated for existing records.
-        batch_membership = getattr(self, 'editing_batch_membership', None) # Get batch_membership if it was set for new entry
+        batch_membership = getattr(self, 'editing_batch_membership', None)
 
         org_details = fetch_one("SELECT org_name FROM organization WHERE org_id = %s", (self.app.current_user_id,))
         if not org_details:
@@ -501,7 +492,7 @@ class EditMembershipStatusPage(BasePage):
         current_org_name = org_details['org_name']
 
         if getattr(self, 'is_adding_new', False):
-            if batch_membership is None: # Should not happen if validation is correct
+            if batch_membership is None:
                 messagebox.showerror("Input Error", "Batch Membership is required for new membership.")
                 return
 
@@ -517,8 +508,8 @@ class EditMembershipStatusPage(BasePage):
                 messagebox.showinfo("Success", f"New membership for AY {academic_year} {semester} added successfully!")
                 self.load_member_info()
                 self.is_adding_new = False
-                self.batch_membership_entry.config(state='normal') # Reset state
-                self.batch_membership_entry.delete(0, tk.END) # Clear after successful add
+                self.batch_membership_entry.config(state='normal') 
+                self.batch_membership_entry.delete(0, tk.END)
             else:
                 messagebox.showerror("Error", "Failed to add new membership.")
         else:
@@ -545,8 +536,8 @@ class EditMembershipStatusPage(BasePage):
 
                 messagebox.showinfo("Success", f"Membership for AY {academic_year} {semester} updated successfully!")
                 self.load_member_info()
-                self.batch_membership_entry.config(state='normal') # Reset state
-                self.batch_membership_entry.delete(0, tk.END) # Clear after successful update
+                self.batch_membership_entry.config(state='normal') 
+                self.batch_membership_entry.delete(0, tk.END) 
             else:
                 messagebox.showerror("Error", "No changes made or failed to update membership.")
 

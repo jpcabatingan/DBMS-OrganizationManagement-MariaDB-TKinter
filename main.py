@@ -1,9 +1,9 @@
+# import modules
 import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel
 from tkinter.font import BOLD
 import re
 
-# Import only what is necessary from shared_variables
 from shared_variables import (
     DB_CONFIG, cnx, cursor,
     connect_db, disconnect_db, execute_query, fetch_one, fetch_all, BasePage
@@ -13,12 +13,13 @@ from orgpov import OrganizationMenuPage
 from orgpov_modifymembers import AddNewMemberPage, EditMembershipStatusPage
 # from orgpov_fees import OrganizationFeesPage # Uncomment when ready
 
+# import member pov classes
 from memberpov import MemberMenuPage, ViewPersonalInfoPage, EditPersonalInfoPage, ViewRegisteredOrgsPage, ViewMembersUnpaidFeesPage
 
 class AuthPage(ttk.Frame):
     def __init__(self, master, app_instance):
         super().__init__(master, padding="0")
-        self.app = app_instance # app_instance is the main App class
+        self.app = app_instance 
         self.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E, tk.S))
         master.grid_rowconfigure(0, weight=1)
         master.grid_columnconfigure(0, weight=1)
@@ -73,7 +74,6 @@ class AuthPage(ttk.Frame):
         self.signup_middle_name_entry.grid(row=13, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
         ttk.Label(member_panel, text="Optional", font=("Arial", 8), foreground='grey').grid(row=14, column=0, sticky=tk.W, pady=(0, 10))
 
-        # RE-ADDED BATCH TO MEMBER SIGNUP
         ttk.Label(member_panel, text="Batch", font=("Arial", 10, BOLD)).grid(row=12, column=1, sticky=tk.W, pady=(10, 0))
         self.signup_batch_entry = ttk.Entry(member_panel, font=("Arial", 12))
         self.signup_batch_entry.grid(row=13, column=1, sticky=(tk.W, tk.E), pady=(0, 5))
@@ -170,9 +170,8 @@ class AuthPage(ttk.Frame):
         last_name = self.signup_last_name_entry.get().strip()
         degree_program = self.signup_degree_program_entry.get().strip()
         gender = self.signup_gender_combobox.get().strip()
-        batch = self.signup_batch_entry.get().strip() # RE-ADDED BATCH
+        batch = self.signup_batch_entry.get().strip() 
 
-        # ADDED BATCH TO VALIDATION
         if not all([student_no, first_name, last_name, degree_program, gender, batch]):
             messagebox.showerror("Input Error", "Please fill in all required fields (Student No, First Name, Last Name, Degree Program, Gender, Batch).")
             return
@@ -181,7 +180,7 @@ class AuthPage(ttk.Frame):
             messagebox.showerror("Validation Error", "Student number format is incorrect. Expected: 20XX-XXXXX")
             return
         
-        # RE-ADDED BATCH INT CONVERSION
+        # convert batch input to int
         try:
             batch_int = int(batch)
         except ValueError:
@@ -196,7 +195,7 @@ class AuthPage(ttk.Frame):
         INSERT INTO member (student_no, first_name, middle_name, last_name, degree_program, gender, batch)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
-        # RE-ADDED BATCH TO INSERT PARAMETERS
+
         rows_affected = execute_query(insert_query, (student_no, first_name, middle_name if middle_name else None, last_name, degree_program, gender, batch_int))
         
         if rows_affected > 0:
@@ -207,7 +206,6 @@ class AuthPage(ttk.Frame):
             self.signup_last_name_entry.delete(0, tk.END)
             self.signup_degree_program_entry.delete(0, tk.END)
             self.signup_gender_combobox.set("F")
-            # RE-ADDED BATCH TO CLEARING
             self.signup_batch_entry.delete(0, tk.END)
         else:
             messagebox.showerror("Signup Error", "Failed to register member.")

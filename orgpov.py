@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from tkinter.font import BOLD
 import datetime
+
+# import shared_variables classes
 from shared_variables import BasePage, execute_query, fetch_one, fetch_all
 
 class OrganizationMenuPage(BasePage):
@@ -13,6 +15,7 @@ class OrganizationMenuPage(BasePage):
         
         self.create_org_menu_layout()
 
+    # org menu
     def create_org_menu_layout(self):
         for widget in self.winfo_children():
             if isinstance(widget, ttk.Label) and widget.cget("text") == "":
@@ -60,9 +63,11 @@ class OrganizationMenuPage(BasePage):
         self.notebook.add(self.fees_tab, text="Manage Finances")
         self.create_fees_tab_widgets()
 
+    # fees tab
     def create_fees_tab_widgets(self):
         ttk.Button(self.fees_tab, text="Go to Fees Management", command=self.app.show_org_fees_page).pack(pady=20)
 
+    # define semesters range
     def get_current_academic_period(self):
         now = datetime.datetime.now()
         current_year = now.year
@@ -80,6 +85,7 @@ class OrganizationMenuPage(BasePage):
 
         return academic_year, semester
 
+    # get current members for the specified semester
     def get_active_members_count_for_current_semester(self, academic_year, semester):
         count_record = fetch_one(
             """
@@ -94,6 +100,7 @@ class OrganizationMenuPage(BasePage):
         )
         return count_record['member_count'] if count_record else 0
 
+    # create new member
     def create_member_tab_widgets(self):
         left_panel = ttk.Frame(self.member_tab)
         left_panel.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E), padx=10, pady=10)
@@ -206,6 +213,7 @@ class OrganizationMenuPage(BasePage):
         for col, width, anchor in zip(columns, widths, anchors):
             tree.column(col, width=width, anchor=anchor)
 
+    # based on the specified categories, get members that satisfy the rules
     def apply_filters_and_generate_report(self):
         self.clear_treeview(self.member_list_tree)
         self.set_default_treeview_columns()
@@ -269,6 +277,7 @@ class OrganizationMenuPage(BasePage):
             columns = ("Student No", "Full Name", "Degree Program", "Gender", "Batch", "Academic Year", "Semester", "Role", "Status", "Committee")
             self.member_list_tree.insert("", "end", values=("No members found matching criteria.",) + ("",) * (len(columns) - 1))
 
+    # get active members
     def generate_active_members_only_report(self):
         self.clear_treeview(self.member_list_tree)
         self.set_default_treeview_columns()
@@ -306,6 +315,8 @@ class OrganizationMenuPage(BasePage):
             columns = ("Student No", "Full Name", "Degree Program", "Gender", "Batch", "Academic Year", "Semester", "Role", "Status", "Committee")
             self.member_list_tree.insert("", "end", values=(f"No active members for {academic_year} {semester}.",) + ("",) * (len(columns) - 1))
 
+    # View the percentage of active vs inactive members of a given organization for the last n
+    # semesters. (Note: n is a positive integer)
     def view_active_members_percentage(self):
         self.percentage_result_label.config(text="")
 
