@@ -12,7 +12,11 @@ from tkinter.font import BOLD
 # MemberMenuPage Class --------------------------------------------------
 class MemberMenuPage(BasePage):
     def __init__(self, master, app_instance):
-        super().__init__(master, app_instance, "Member Menu") # Pass app_instance to BasePage
+        super().__init__(master, app_instance, "Member Menu") # This calls BasePage's __init__
+
+        # ADD THESE TWO LINES TO HIDE THE BACK BUTTON
+        self.back_button.grid_forget() # Removes the button from the grid layout
+        self.back_button.destroy()     # Destroys the widget itself
 
         # Configure columns for content_frame
         self.content_frame.grid_columnconfigure(0, weight=1)
@@ -20,7 +24,6 @@ class MemberMenuPage(BasePage):
 
         # Welcome Message
         ttk.Label(self.content_frame, text=f"Welcome, {self.app.current_user_id}!", font=("Arial", 16, BOLD)).grid(row=0, column=0, columnspan=2, pady=20)
-        # Access CURRENT_USER_ID via self.app.current_user_id
 
         self.create_widgets()
 
