@@ -429,13 +429,13 @@ class OrganizationFeesPage(BasePage):
             base_query = """
                 SELECT 
                     SUM(CASE WHEN f.date_paid IS NOT NULL AND f.date_paid <= %s THEN f.amount ELSE 0 END) AS total_paid,
-                    SUM(CASE WHEN (f.date_paid IS NULL OR f.date_paid > %s) AND f.payment_deadline <= %s THEN f.amount ELSE 0 END) AS total_unpaid
+                    SUM(CASE WHEN f.date_paid IS NULL THEN f.amount ELSE 0 END) AS total_unpaid
                 FROM fee f
                 JOIN serves s ON f.student_no = s.student_no AND f.org_name = s.org_name
                 WHERE f.org_name = %s
             """
             
-            params = [target_date, target_date, target_date, self.app.org_name]
+            params = [target_date, self.app.org_name]
             
             if year_filter != "All":
                 base_query += " AND s.academic_year = %s"
@@ -456,16 +456,17 @@ class OrganizationFeesPage(BasePage):
             debt_query = """
                 SELECT 
                     CONCAT(m.first_name, ' ', m.last_name) AS name,
-                    f.amount
+                    f.amount,
+                    CASE WHEN f.payment_deadline <= %s THEN 'late' ELSE 'unpaid' END AS debt_status
                 FROM fee f
                 JOIN member m ON f.student_no = m.student_no
                 JOIN serves s ON f.student_no = s.student_no AND f.org_name = s.org_name
                 WHERE f.org_name = %s
-                AND (f.date_paid IS NULL OR f.date_paid > %s)
-                AND f.payment_deadline <= %s
+                AND f.date_paid IS NULL
+                AND (f.payment_deadline > %s OR f.payment_deadline <= %s)
             """
             
-            debt_params = [self.app.org_name, target_date, target_date]
+            debt_params = [target_date, self.app.org_name, target_date, target_date]
             
             if year_filter != "All":
                 debt_query += " AND s.academic_year = %s"
@@ -480,7 +481,8 @@ class OrganizationFeesPage(BasePage):
             highest_debt = fetch_one(debt_query, tuple(debt_params))
             
             if highest_debt:
-                self.highest_debt_label.config(text=f"{highest_debt['name']} (₱{float(highest_debt['amount']):,.2f})")
+                status = "late" if highest_debt['debt_status'] == 'late' else "unpaid"
+                self.highest_debt_label.config(text=f"{highest_debt['name']} (₱{float(highest_debt['amount']):,.2f}, {status})")
             else:
                 self.highest_debt_label.config(text="None")
                 
