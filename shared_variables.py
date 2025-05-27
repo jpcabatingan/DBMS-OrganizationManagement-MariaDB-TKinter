@@ -1,11 +1,9 @@
-# shared_variables.py
-
 import mysql.connector
 from tkinter import messagebox
 from tkinter.font import BOLD
-import tkinter as tk # Ensure tk is imported for BasePage
+import tkinter as tk 
 
-# Database configuration - Replace with your actual database credentials
+# database configuration
 DB_CONFIG = {
     'host': '127.0.0.1',
     'user': 'admin',
@@ -16,6 +14,7 @@ DB_CONFIG = {
 cnx = None
 cursor = None
 
+# database connection
 def connect_db():
     global cnx, cursor
     try:
@@ -36,6 +35,7 @@ def disconnect_db():
         cnx.close()
         print("Database connection closed.")
 
+# execute given query
 def execute_query(query, params=None):
     global cnx, cursor
     try:
@@ -46,9 +46,10 @@ def execute_query(query, params=None):
         print(f"Error executing query: {err}")
         messagebox.showerror("Database Error", f"Error executing query: {err}")
         if cnx:
-            cnx.rollback() # Rollback changes on error
-        return -1 # Indicate an error
+            cnx.rollback()
+        return -1
 
+# fetch one row
 def fetch_one(query, params=None):
     global cursor
     try:
@@ -59,6 +60,7 @@ def fetch_one(query, params=None):
         messagebox.showerror("Database Error", f"Error fetching data: {err}")
         return None
 
+# fetch all rows
 def fetch_all(query, params=None):
     global cursor
     try:
@@ -69,42 +71,29 @@ def fetch_all(query, params=None):
         messagebox.showerror("Database Error", f"Error fetching data: {err}")
         return None
 
+# base page for app
 class BasePage(tk.Frame):
     def __init__(self, master, app_instance, title_text=""):
         super().__init__(master, bg="#f0f0f0")
-        self.app = app_instance # app_instance is now the App class instance
-
-        # Instead of self.pack(), let the master (App) manage BasePage with grid
-        # self.pack(fill="both", expand=True) # <--- REMOVE THIS LINE
-
-        # Configure BasePage to be gridded by its parent (the App instance)
-        # This allows App's show_page to put BasePage in grid correctly.
-        # But crucially, we'll use grid within BasePage itself from now on.
+        self.app = app_instance 
         self.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E, tk.S))
-        self.grid_rowconfigure(1, weight=1) # Row for content_frame
-        self.grid_columnconfigure(0, weight=1) # Column for content_frame
-
-        # The back button will be in its own row at the top
+        self.grid_rowconfigure(1, weight=1) 
+        self.grid_columnconfigure(0, weight=1) 
         self.back_button = tk.Button(self, text="Back to Menu", command=self.go_back,
                                      bg="#888888", fg="white", font=("Arial", 10, BOLD), relief="flat", padx=10, pady=5)
-        # Place back_button using grid directly on BasePage
         self.back_button.grid(row=0, column=0, sticky=tk.NW, padx=20, pady=10)
 
 
         self.content_frame = tk.Frame(self, bg="#f0f0f0")
-        # Place content_frame using grid on BasePage
         self.content_frame.grid(row=1, column=0, sticky=(tk.N, tk.W, tk.E, tk.S), padx=20, pady=20)
-        
-        # Now, children of content_frame can use grid (or pack, independently)
-        self.content_frame.grid_columnconfigure(0, weight=1) # This is fine here
+        self.content_frame.grid_columnconfigure(0, weight=1) 
 
     def go_back(self):
-        # Now access current user type from the app_instance
         if self.app.current_user_type == 'organization' and self.app.current_org_name:
             self.app.show_organization_menu()
+        elif self.app.current_user_type == 'member' and self.app.current_user_type:
+            self.app.show_member_menu()
         elif self.app.current_user_type == 'admin':
-            # Assuming you have an admin menu method in App
-            # self.app.show_admin_menu() 
-            messagebox.showinfo("Coming Soon", "Admin menu is not yet implemented.") # Placeholder
+            messagebox.showinfo("Coming Soon", "Admin menu is not yet implemented.") 
         else:
-            self.app.show_auth_page() # Default to auth page if no specific menu is applicable
+            self.app.show_auth_page() 

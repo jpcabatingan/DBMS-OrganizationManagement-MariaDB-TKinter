@@ -2,7 +2,12 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from tkinter.font import BOLD
 import datetime
+
+# import shared_variables
 from shared_variables import BasePage, execute_query, fetch_one, fetch_all
+
+# import alumni page
+from orgpov_alumni import OrganizationAlumniPage
 
 class OrganizationMenuPage(BasePage):
     def __init__(self, master, app_instance, passed_org_name=None):
@@ -13,6 +18,7 @@ class OrganizationMenuPage(BasePage):
         
         self.create_org_menu_layout()
 
+    # org menu
     def create_org_menu_layout(self):
         for widget in self.winfo_children():
             if isinstance(widget, ttk.Label) and widget.cget("text") == "":
@@ -60,11 +66,13 @@ class OrganizationMenuPage(BasePage):
         self.notebook.add(self.fees_tab, text="Manage Finances")
         self.create_fees_tab_widgets()
 
+    # fees tab
     def create_fees_tab_widgets(self):
         from orgpov_fees import OrganizationFeesPage
         self.fees_page = OrganizationFeesPage(self.fees_tab, self)
         self.fees_page.pack(fill=tk.BOTH, expand=True)
-            
+
+    # define semesters range
     def get_current_academic_period(self):
         now = datetime.datetime.now()
         current_year = now.year
@@ -82,6 +90,7 @@ class OrganizationMenuPage(BasePage):
 
         return academic_year, semester
 
+    # get current members for the specified semester
     def get_active_members_count_for_current_semester(self, academic_year, semester):
         count_record = fetch_one(
             """
@@ -96,6 +105,7 @@ class OrganizationMenuPage(BasePage):
         )
         return count_record['member_count'] if count_record else 0
 
+    # create new member
     def create_member_tab_widgets(self):
         left_panel = ttk.Frame(self.member_tab)
         left_panel.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E), padx=10, pady=10)
@@ -189,6 +199,7 @@ class OrganizationMenuPage(BasePage):
         self.set_default_treeview_columns()
         self.apply_filters_and_generate_report()
 
+
     def set_default_treeview_columns(self):
         columns = ("Student No", "Full Name", "Degree Program", "Gender", "Batch", "Academic Year", "Semester", "Role", "Status", "Committee")
         headings = ("Student No", "Full Name", "Degree Program", "Gender", "Batch", "Academic Year", "Semester", "Role", "Status", "Committee")
@@ -208,6 +219,7 @@ class OrganizationMenuPage(BasePage):
         for col, width, anchor in zip(columns, widths, anchors):
             tree.column(col, width=width, anchor=anchor)
 
+    # based on the specified categories, get members that satisfy the rules
     def apply_filters_and_generate_report(self):
         self.clear_treeview(self.member_list_tree)
         self.set_default_treeview_columns()
@@ -271,6 +283,7 @@ class OrganizationMenuPage(BasePage):
             columns = ("Student No", "Full Name", "Degree Program", "Gender", "Batch", "Academic Year", "Semester", "Role", "Status", "Committee")
             self.member_list_tree.insert("", "end", values=("No members found matching criteria.",) + ("",) * (len(columns) - 1))
 
+    # get active members
     def generate_active_members_only_report(self):
         self.clear_treeview(self.member_list_tree)
         self.set_default_treeview_columns()
@@ -308,6 +321,8 @@ class OrganizationMenuPage(BasePage):
             columns = ("Student No", "Full Name", "Degree Program", "Gender", "Batch", "Academic Year", "Semester", "Role", "Status", "Committee")
             self.member_list_tree.insert("", "end", values=(f"No active members for {academic_year} {semester}.",) + ("",) * (len(columns) - 1))
 
+    # View the percentage of active vs inactive members of a given organization for the last n
+    # semesters. (Note: n is a positive integer)
     def view_active_members_percentage(self):
         self.percentage_result_label.config(text="")
 
@@ -359,17 +374,18 @@ class OrganizationMenuPage(BasePage):
         total_active = 0
         total_inactive = 0
         
+        # find active members
         for record in semesters_to_consider:
             ay, sem = record['academic_year'], record['semester']
             active_count_record = fetch_one("""
-                SELECT COUNT(DISTINCT student_no) AS active_count -- <--- Add AS alias_name
+                SELECT COUNT(DISTINCT student_no) AS active_count 
                 FROM serves
                 WHERE org_name = %s AND academic_year = %s AND semester = %s AND status = 'Active';
                 """, (self.app.current_org_name, ay, sem))
             active_count = active_count_record['active_count'] if active_count_record else 0
 
             inactive_count_record = fetch_one("""
-                SELECT COUNT(DISTINCT student_no) AS inactive_count -- <--- Add AS alias_name
+                SELECT COUNT(DISTINCT student_no) AS inactive_count 
                 FROM serves
                 WHERE org_name = %s AND academic_year = %s AND semester = %s AND status != 'Active';
                 """, (self.app.current_org_name, ay, sem))
@@ -377,15 +393,115 @@ class OrganizationMenuPage(BasePage):
 
             total_active += active_count
             total_inactive += inactive_count
-            
+        
+        # show results of active members percentage
         overall_total = total_active + total_inactive
         if overall_total > 0:
             active_percentage = (total_active / overall_total) * 100
             inactive_percentage = (total_inactive / overall_total) * 100
-            result_text = (f"Overall (last {n} semesters):\n"
-                           f"Active: {total_active} ({active_percentage:.2f}%)\n"
+            result_text = (f"Active: {total_active} ({active_percentage:.2f}%)\n"
                            f"Inactive: {total_inactive} ({inactive_percentage:.2f}%)\n")
         else:
             result_text = "No member data found for the specified semesters."
 
         self.percentage_result_label.config(text=result_text)
+    
+    
+    def create_member_tab_widgets(self):
+        # Define left_panel here
+        left_panel = ttk.Frame(self.member_tab)
+        left_panel.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E, tk.S), padx=10, pady=10)
+        left_panel.grid_columnconfigure(1, weight=1)
+
+        filter_frame = ttk.LabelFrame(left_panel, text="Filters", padding="10")
+        filter_frame.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E), columnspan=2, pady=(0, 10))
+        filter_frame.grid_columnconfigure(1, weight=1)
+
+        filter_row = 0
+        self.filter_vars = {}
+
+        current_ay, current_sem = self.get_current_academic_period()
+        default_ay_filter = current_ay if current_ay else ""
+        default_sem_filter = current_sem if current_sem else "All"
+
+        ttk.Label(filter_frame, text="Academic Year:").grid(row=filter_row, column=0, sticky=tk.W, pady=2)
+        self.filter_vars['academic_year'] = tk.StringVar(value=default_ay_filter)
+        ttk.Entry(filter_frame, textvariable=self.filter_vars['academic_year']).grid(row=filter_row, column=1, sticky=(tk.W, tk.E), pady=2)
+        filter_row += 1
+
+        ttk.Label(filter_frame, text="Semester:").grid(row=filter_row, column=0, sticky=tk.W, pady=2)
+        self.filter_vars['semester'] = tk.StringVar(value=default_sem_filter)
+        ttk.Combobox(filter_frame, textvariable=self.filter_vars['semester'], values=["All", "First", "Second"], state="readonly").grid(row=filter_row, column=1, sticky=(tk.W, tk.E), pady=2)
+        filter_row += 1
+
+        labels_and_options = {
+            "Role:": ["All", "Member", "President", "Vice President", "EAC Chairperson", "Secretary", "Finance Chairperson", "SCC Chairperson", "MC Chairperson"],
+            "Status:": ["All", "Active", "Inactive", "Disaffiliated", "Alumni"],
+            "Gender:": ["All", "F", "M"],
+            "Degree Program:": [],
+            "Batch:": [],
+            "Committee:": ["All", "Executive", "Internal Academics", "External Academics", "Secretariat", "Finance", "Socio-Cultural", "Membership"]
+        }
+
+        for label_text, options in labels_and_options.items():
+            ttk.Label(filter_frame, text=label_text).grid(row=filter_row, column=0, sticky=tk.W, pady=2)
+            key = label_text.replace(":", "").replace(" ", "_").lower()
+            if options:
+                var = tk.StringVar(value=options[0])
+                combobox = ttk.Combobox(filter_frame, textvariable=var, values=options, state="readonly")
+                combobox.grid(row=filter_row, column=1, sticky=(tk.W, tk.E), pady=2)
+                self.filter_vars[key] = var
+            else:
+                var = tk.StringVar()
+                entry = ttk.Entry(filter_frame, textvariable=var)
+                entry.grid(row=filter_row, column=1, sticky=(tk.W, tk.E), pady=2)
+                self.filter_vars[key] = var
+            filter_row += 1
+
+        ttk.Button(filter_frame, text="Apply Filters", command=self.apply_filters_and_generate_report, style='Login.TButton').grid(row=filter_row, column=0, columnspan=2, pady=10)
+
+        update_members_frame = ttk.LabelFrame(left_panel, text="Update members", padding="10")
+        update_members_frame.grid(row=1, column=0, sticky=(tk.N, tk.W, tk.E), columnspan=2, pady=(10, 10))
+        update_members_frame.grid_columnconfigure(0, weight=1)
+
+        ttk.Button(update_members_frame, text="Add new member", command=self.app.show_add_new_member_page, style='Login.TButton').grid(row=0, column=0, sticky=(tk.W, tk.E), pady=5)
+        ttk.Button(update_members_frame, text="Edit member details", command=self.app.show_edit_membership_status_page, style='Login.TButton').grid(row=1, column=0, sticky=(tk.W, tk.E), pady=5)
+
+        active_percentage_frame = ttk.LabelFrame(left_panel, text="Active Members Percentage", padding="10")
+        active_percentage_frame.grid(row=2, column=0, sticky=(tk.N, tk.W, tk.E), columnspan=2, pady=(10, 0))
+        active_percentage_frame.grid_columnconfigure(0, weight=1)
+        active_percentage_frame.grid_columnconfigure(1, weight=1)
+
+        ttk.Label(active_percentage_frame, text="Last No. of Semesters").grid(row=0, column=0, sticky=tk.W, pady=2)
+        self.n_semesters_entry = ttk.Entry(active_percentage_frame)
+        self.n_semesters_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=2)
+        self.n_semesters_entry.insert(0, "1")
+
+        ttk.Button(active_percentage_frame, text="View Percentage", command=self.view_active_members_percentage, style='Login.TButton').grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
+
+        self.percentage_result_label = ttk.Label(active_percentage_frame, text="")
+        self.percentage_result_label.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
+        
+        # New button to view alumni, placed outside active_percentage_frame
+        ttk.Button(left_panel, text="View Alumni Report", command=self.app.show_alumni_page, style='Login.TButton').grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=10)
+
+        tree_frame = ttk.Frame(self.member_tab)
+        # Adjusted rowspan from 3 to 4 as there's now an additional row (row=3) in left_panel
+        # to accommodate the new "View Alumni Report" button.
+        tree_frame.grid(row=0, column=1, sticky=(tk.N, tk.W, tk.E, tk.S), padx=10, pady=10, rowspan=4)
+        tree_frame.grid_rowconfigure(0, weight=1)
+        tree_frame.grid_columnconfigure(0, weight=1)
+
+        self.member_list_tree = ttk.Treeview(tree_frame, show="headings")
+        self.member_list_tree.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E, tk.S))
+
+        member_list_scrollbar_y = ttk.Scrollbar(tree_frame, orient="vertical", command=self.member_list_tree.yview)
+        member_list_scrollbar_y.grid(row=0, column=1, sticky=(tk.N, tk.S))
+        self.member_list_tree.configure(yscrollcommand=member_list_scrollbar_y.set)
+
+        member_list_scrollbar_x = ttk.Scrollbar(tree_frame, orient="horizontal", command=self.member_list_tree.xview)
+        member_list_scrollbar_x.grid(row=1, column=0, sticky=(tk.W, tk.E))
+        self.member_list_tree.configure(xscrollcommand=member_list_scrollbar_x.set)
+
+        self.set_default_treeview_columns()
+        self.apply_filters_and_generate_report()

@@ -1,25 +1,31 @@
+# import modules
 import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel
 from tkinter.font import BOLD
 import re
 
 # Import only what is necessary from shared_variables
-from orgpov import OrganizationMenuPage
 from shared_variables import (
     DB_CONFIG, cnx, cursor,
     connect_db, disconnect_db, execute_query, fetch_one, fetch_all, BasePage
 )
 
+# import orgpov classes
+from orgpov import OrganizationMenuPage
+
 from orgpov_modifymembers import AddNewMemberPage, EditMembershipStatusPage
+from orgpov_alumni import OrganizationAlumniPage
 # from orgpov_fees import OrganizationFeesPage # Uncomment when ready
 from orgpov_fees import OrganizationFeesPage
 
+# import member pov classes
 from memberpov import MemberMenuPage, ViewPersonalInfoPage, EditPersonalInfoPage, ViewRegisteredOrgsPage, ViewMembersUnpaidFeesPage
+
 
 class AuthPage(ttk.Frame):
     def __init__(self, master, app_instance):
         super().__init__(master, padding="0")
-        self.app = app_instance # app_instance is the main App class
+        self.app = app_instance 
         self.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E, tk.S))
         master.grid_rowconfigure(0, weight=1)
         master.grid_columnconfigure(0, weight=1)
@@ -149,7 +155,6 @@ class AuthPage(ttk.Frame):
 
 
     def member_login(self):
-        # Access attributes of the app instance
         student_no = self.member_student_no_entry.get().strip()
         if not student_no:
             messagebox.showerror("Login Error", "Please enter a Student Number.")
@@ -171,7 +176,7 @@ class AuthPage(ttk.Frame):
         last_name = self.signup_last_name_entry.get().strip()
         degree_program = self.signup_degree_program_entry.get().strip()
         gender = self.signup_gender_combobox.get().strip()
-        batch = self.signup_batch_entry.get().strip()
+        batch = self.signup_batch_entry.get().strip() 
 
         if not all([student_no, first_name, last_name, degree_program, gender, batch]):
             messagebox.showerror("Input Error", "Please fill in all required fields (Student No, First Name, Last Name, Degree Program, Gender, Batch).")
@@ -181,6 +186,7 @@ class AuthPage(ttk.Frame):
             messagebox.showerror("Validation Error", "Student number format is incorrect. Expected: 20XX-XXXXX")
             return
         
+        # convert batch input to int
         try:
             batch_int = int(batch)
         except ValueError:
@@ -195,6 +201,7 @@ class AuthPage(ttk.Frame):
         INSERT INTO member (student_no, first_name, middle_name, last_name, degree_program, gender, batch)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
+
         rows_affected = execute_query(insert_query, (student_no, first_name, middle_name if middle_name else None, last_name, degree_program, gender, batch_int))
         
         if rows_affected > 0:
@@ -211,7 +218,6 @@ class AuthPage(ttk.Frame):
 
 
     def org_login(self):
-        # Access attributes of the app instance
         org_id = self.org_id_entry.get().strip()
 
         if not org_id:
@@ -222,7 +228,7 @@ class AuthPage(ttk.Frame):
         if org_info:
             self.app.current_user_type = 'organization'
             self.app.current_user_id = org_id
-            self.app.current_org_name = org_info['org_name'] # Set the app attribute
+            self.app.current_org_name = org_info['org_name']
             messagebox.showinfo("Login Success", f"Welcome, {self.app.current_org_name} (Organization)!")
             self.app.show_organization_menu()
         else:
@@ -262,11 +268,10 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Organization Management System")
-        self.geometry("1200x920")
+        self.geometry("1500x920")
 
         self.current_page = None
         self.pages = {}
-        # Initialize user/org specific attributes here
         self.current_user_type = None
         self.current_user_id = None
         self.current_org_name = None
@@ -284,16 +289,17 @@ class App(tk.Tk):
         page_class = self.pages.get(page_class_name)
 
         if page_class:
-            # Pass self as app_instance to all pages
-            self.current_page = page_class(self, self, *args)
+            self.current_page = page_class(self, self, *args) 
             self.current_page.tkraise()
         else:
             messagebox.showerror("Navigation Error", f"Page class '{page_class_name}' not found.")
 
+    # authentication page
     def show_auth_page(self):
         self.pages['AuthPage'] = AuthPage
         self.show_page('AuthPage')
 
+    # member pov pages
     def show_member_menu(self):
         self.pages['MemberMenuPage'] = MemberMenuPage
         self.show_page('MemberMenuPage')
@@ -314,9 +320,10 @@ class App(tk.Tk):
         self.pages['ViewMembersUnpaidFeesPage'] = ViewMembersUnpaidFeesPage
         self.show_page('ViewMembersUnpaidFeesPage')
 
+    # organization pov pages
     def show_organization_menu(self):
         self.pages['OrganizationMenuPage'] = OrganizationMenuPage
-        self.show_page('OrganizationMenuPage', self.current_org_name) # Pass the attribute
+        self.show_page('OrganizationMenuPage', self.current_org_name)
 
     def show_add_new_member_page(self):
         self.pages['AddNewMemberPage'] = AddNewMemberPage
@@ -325,15 +332,17 @@ class App(tk.Tk):
     def show_edit_membership_status_page(self):
         self.pages['EditMembershipStatusPage'] = EditMembershipStatusPage
         self.show_page('EditMembershipStatusPage')
+    
+    def show_alumni_page(self):
+        self.pages['OrganizationAlumniPage'] = OrganizationAlumniPage
+        self.show_page('OrganizationAlumniPage', "Alumni Members Report", self.current_org_name)
 
     def show_org_fees_page(self):
-        # You'll need to uncomment the import first:
-        # from orgpov_fees import OrganizationFeesPage 
-        
         self.pages['OrganizationFeesPage'] = OrganizationFeesPage
         self.show_page('OrganizationFeesPage')
-        # messagebox.showinfo("Coming Soon", "Organization Fees page is not yet implemented.")
 
+    
+    # authentication logout
     def logout(self):
         self.current_user_type = None
         self.current_user_id = None
