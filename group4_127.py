@@ -675,8 +675,9 @@ class AddNewMemberPage(BasePage):
                 entry.grid(row=i + 1, column=1, sticky=(W, E), padx=5, pady=2)
                 self.entries[text.replace(":", "").replace(" ", "_").lower()] = entry
 
+
         self.role_options = ["Member", "President", "Vice President", "EAC Chairperson", "Secretary", "Finance Chairperson", "SCC Chairperson", "MC Chairperson"]
-        self.status_options = ["Active", "Inactive", "Disaffiliated", "Alumni"]
+        self.status_options = ["Active", "Inactive", "Expelled", "Suspended", "Alumni"]
         self.committee_options = ["Executive", "Internal Academics", "External Academics", "Secretariat", "Finance", "Socio-Cultural", "Membership"]
 
         self.role_combobox = ttk.Combobox(self, values=self.role_options, state="readonly")
