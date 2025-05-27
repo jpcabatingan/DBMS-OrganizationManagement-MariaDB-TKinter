@@ -61,11 +61,11 @@ CREATE TABLE IF NOT EXISTS serves(
 -- Initial Org Members
 -- Initial Members
 INSERT INTO member (student_no, first_name, middle_name, last_name, degree_program, gender, batch) VALUES
-('2023-00001', 'Gumball', NULL, 'Watterson', 'BS Computer Science', 'Male', 2023),
-('2023-00002', 'Anais', NULL, 'Watterson', 'BS Applied Mathematics', 'Female', 2023),
-('2023-00003', 'Darwin', NULL, 'Watterson', 'BS Biology', 'Male', 2023),
-('2023-00004', 'Nicole', NULL, 'Watterson', 'BS Chemistry', 'Female', 2023),
-('2023-00005', 'Richard', NULL, 'Watterson', 'BA Communication Arts', 'Male', 2023);
+('2023-00001', 'Gumball', NULL, 'Watterson', 'BS Computer Science', 'M', 2023),
+('2023-00002', 'Anais', NULL, 'Watterson', 'BS Applied Mathematics', 'F', 2023),
+('2023-00003', 'Darwin', NULL, 'Watterson', 'BS Biology', 'M', 2023),
+('2023-00004', 'Nicole', NULL, 'Watterson', 'BS Chemistry', 'F', 2023),
+('2023-00005', 'Richard', NULL, 'Watterson', 'BA Communication Arts', 'M', 2023);
 
 -- Initial Organizations
 INSERT INTO organization (org_id, org_name, no_of_members) VALUES
