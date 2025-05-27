@@ -61,8 +61,10 @@ class OrganizationMenuPage(BasePage):
         self.create_fees_tab_widgets()
 
     def create_fees_tab_widgets(self):
-        ttk.Button(self.fees_tab, text="Go to Fees Management", command=self.app.show_org_fees_page).pack(pady=20)
-
+        from orgpov_fees import OrganizationFeesPage
+        self.fees_page = OrganizationFeesPage(self.fees_tab, self)
+        self.fees_page.pack(fill=tk.BOTH, expand=True)
+            
     def get_current_academic_period(self):
         now = datetime.datetime.now()
         current_year = now.year

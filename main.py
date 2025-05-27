@@ -4,14 +4,15 @@ from tkinter.font import BOLD
 import re
 
 # Import only what is necessary from shared_variables
+from orgpov import OrganizationMenuPage
 from shared_variables import (
     DB_CONFIG, cnx, cursor,
     connect_db, disconnect_db, execute_query, fetch_one, fetch_all, BasePage
 )
 
-from orgpov import OrganizationMenuPage
 from orgpov_modifymembers import AddNewMemberPage, EditMembershipStatusPage
 # from orgpov_fees import OrganizationFeesPage # Uncomment when ready
+from orgpov_fees import OrganizationFeesPage
 
 from memberpov import MemberMenuPage, ViewPersonalInfoPage, EditPersonalInfoPage, ViewRegisteredOrgsPage, ViewMembersUnpaidFeesPage
 
@@ -328,9 +329,10 @@ class App(tk.Tk):
     def show_org_fees_page(self):
         # You'll need to uncomment the import first:
         # from orgpov_fees import OrganizationFeesPage 
-        # self.pages['OrganizationFeesPage'] = OrganizationFeesPage 
-        # self.show_page('OrganizationFeesPage')
-        messagebox.showinfo("Coming Soon", "Organization Fees page is not yet implemented.")
+        
+        self.pages['OrganizationFeesPage'] = OrganizationFeesPage
+        self.show_page('OrganizationFeesPage')
+        # messagebox.showinfo("Coming Soon", "Organization Fees page is not yet implemented.")
 
     def logout(self):
         self.current_user_type = None
