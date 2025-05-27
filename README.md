@@ -38,4 +38,6 @@ In Python Terminal
 5. orgpov_modifymembers.py
     - add member
     - edit member
-6. orgpov_fees.py
+6. orgpov_alumni
+    - view alumni as of given date
+7. orgpov_fees.py
