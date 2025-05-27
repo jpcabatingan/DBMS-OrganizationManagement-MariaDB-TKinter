@@ -123,6 +123,7 @@ class AuthPage(ttk.Frame):
         ttk.Button(member_panel, text="Sign-up", style='Login.TButton', command=self.member_signup).grid(row=16, column=1, sticky=tk.E, padx=(5,0))
 
         # --- Organization Panel (Right Side) ---
+        
         org_panel = ttk.Frame(self, style='AuthPanel.TFrame', padding="30")
         org_panel.grid(row=0, column=1, sticky=(tk.N, tk.W, tk.E, tk.S), padx=0, pady=0)
         org_panel.grid_columnconfigure(0, weight=1)
@@ -161,7 +162,7 @@ class AuthPage(ttk.Frame):
 
         LIGHT_GREY = "#E0E0E0"
         DARK_GREY = "#616161"
-        PURPLE = "#673AB7"
+        BLUE = "#446EE2"
 
         self.master.configure(bg=LIGHT_GREY)
 
@@ -170,11 +171,11 @@ class AuthPage(ttk.Frame):
         style.configure('Separator.TFrame', background=DARK_GREY)
         style.configure('TLabel', background='white', foreground='black')
         style.configure('Login.TButton',
-                        background=PURPLE,
+                        background=BLUE,
                         foreground='white',
                         font=("Arial", 10, BOLD),
                         borderwidth=0,
-                        focuscolor=PURPLE,
+                        focuscolor=BLUE,
                         relief="flat")
         style.map('Login.TButton',
                   background=[('active', '#5E35B1'), ('pressed', '#4527A0')],
@@ -297,13 +298,13 @@ class AuthPage(ttk.Frame):
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to sign up: {err}")
 
-# --- Base Page Class (No changes from previous update, included for context) ---
+# BasePage Class ----------------------------------------------------------------------------------
 class BasePage(ttk.Frame):
     def __init__(self, master, app_instance, title):
         super().__init__(master, padding="20")
         self.app = app_instance
         self.title = title
-        self.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E, tk.S)) # FIX: Added tk. prefix
+        self.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E, tk.S))
         master.grid_rowconfigure(0, weight=1)
         master.grid_columnconfigure(0, weight=1)
         self.create_widgets()
@@ -321,7 +322,7 @@ class BasePage(ttk.Frame):
         else:
             self.app.show_auth_page()
 
-# --- Member Pages (No changes from previous update, included for context) ---
+# Member POV | Pages Class ----------------------------------------------------------------------------------
 class MemberMenuPage(BasePage):
     def __init__(self, master, app_instance):
         super().__init__(master, app_instance, "Member Menu")
@@ -341,6 +342,7 @@ class MemberMenuPage(BasePage):
         row_idx += 1
         ttk.Button(self, text="Logout", command=self.app.logout).grid(row=row_idx + 1, column=0, sticky=tk.W, pady=20)
 
+# Member POV | Personal Info Page Class ----------------------------------------------------------------------------------
 class ViewPersonalInfoPage(BasePage):
     def __init__(self, master, app_instance):
         super().__init__(master, app_instance, "View Personal Information")
@@ -365,6 +367,7 @@ class ViewPersonalInfoPage(BasePage):
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to retrieve personal info: {err}")
 
+# Member POV | Edit Personal Info Class ----------------------------------------------------------------------------------
 class EditPersonalInfoPage(BasePage):
     def __init__(self, master, app_instance):
         super().__init__(master, app_instance, "Edit Personal Information")
@@ -384,7 +387,7 @@ class EditPersonalInfoPage(BasePage):
                     ttk.Label(self, text=label_text).grid(row=i + 1, column=0, sticky=tk.W, padx=5, pady=2)
                     if label_text == "Gender:":
                         entry = ttk.Combobox(self, values=["F", "M"], state="readonly")
-                        entry.set(member_info[i] if member_info[i] is not None else "F") # Set default or current
+                        entry.set(member_info[i] if member_info[i] is not None else "F") 
                     else:
                         entry = ttk.Entry(self)
                         entry.insert(0, str(member_info[i]) if member_info[i] is not None else "")
@@ -444,6 +447,7 @@ class EditPersonalInfoPage(BasePage):
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to update personal info: {err}")
 
+# Member POV | Orgs Page Class ----------------------------------------------------------------------------------
 class ViewRegisteredOrgsPage(BasePage):
     def __init__(self, master, app_instance):
         super().__init__(master, app_instance, "Organizations You Are Registered In")
@@ -508,7 +512,7 @@ class ViewRegisteredOrgsPage(BasePage):
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to retrieve organizations: {err}")
 
-
+# Member POV | Upaid Fees Class ----------------------------------------------------------------------------------
 class ViewMembersUnpaidFeesPage(BasePage):
     def __init__(self, master, app_instance):
         super().__init__(master, app_instance, "Your Unpaid Fees")
@@ -567,7 +571,7 @@ class ViewMembersUnpaidFeesPage(BasePage):
             messagebox.showerror("Database Error", f"Failed to retrieve unpaid fees: {err}")
 
 
-# --- Organization Pages ---
+# Organization POV | Menu Page Class ----------------------------------------------------------------------------------
 class OrganizationMenuPage(BasePage):
     def __init__(self, master, app_instance):
         # We'll create our own title/header, so don't pass title to BasePage
@@ -591,13 +595,18 @@ class OrganizationMenuPage(BasePage):
         header_frame.grid_columnconfigure(2, weight=0) # Logout button
 
         # Placeholder for organization icon (e.g., from an image file if available)
-        # ttk.Label(header_frame, text="🏛️", font=("Arial", 30)).grid(row=0, column=0, rowspan=2, padx=10) # Using an emoji
+        ttk.Label(header_frame, text="🏛️", font=("Arial", 30)).grid(row=0, column=0, rowspan=2, padx=10) # Using an emoji
         ttk.Label(header_frame, text="Welcome, " + CURRENT_ORG_NAME, font=("Arial", 20, BOLD)).grid(row=0, column=1, sticky=tk.W, pady=(0, 5))
         ttk.Label(header_frame, text=f"Organization ID: {CURRENT_USER_ID}").grid(row=1, column=1, sticky=tk.W)
 
-        # Get active members for current semester
-        active_members_count = self.get_active_members_count_for_current_semester()
-        ttk.Label(header_frame, text=f"Active members this semester: {active_members_count}").grid(row=2, column=1, sticky=tk.W, pady=(0, 5))
+        # Active Members Count
+        academic_year, semester = self.get_current_academic_period()
+        if academic_year and semester: # Check if academic period was valid
+            active_members_count = self.get_active_members_count_for_current_semester(academic_year, semester)
+            ttk.Label(header_frame, text=f"Active members this semester ({academic_year} {semester}): {active_members_count}").grid(row=2, column=1, sticky=tk.W, pady=(0, 5))
+        else:
+            ttk.Label(header_frame, text="Active members count: N/A (Invalid Academic Period)").grid(row=2, column=1, sticky=tk.W, pady=(0, 5))
+
 
         ttk.Button(header_frame, text="Log Out", command=self.app.logout).grid(row=0, column=2, sticky=tk.NE, padx=10, pady=5)
 
@@ -622,8 +631,9 @@ class OrganizationMenuPage(BasePage):
         # Fees Management Tab (Placeholder)
         self.fees_tab = ttk.Frame(self.notebook, padding="15")
         self.notebook.add(self.fees_tab, text="Manage Finances")
-        ttk.Label(self.fees_tab, text="Fees Management features will be implemented here.").pack(pady=20)
-
+        # For demonstration, adding a button to show late payments here
+        ttk.Label(self.fees_tab, text="Fees Management features:").grid(row=0, column=0, sticky=tk.W, pady=(0,5))
+        ttk.Button(self.fees_tab, text="View Late Payments", command=self.app.show_view_late_payments_page, style='Login.TButton').grid(row=1, column=0, sticky=tk.W, pady=5)
 
     def get_current_academic_period(self):
         """Determines the current academic year and semester based on the redefined ranges."""
@@ -637,19 +647,14 @@ class OrganizationMenuPage(BasePage):
         elif 1 <= current_month <= 5: # January to May
             academic_year = f"{current_year - 1}-{current_year}"
             semester = "Second"
-        else: # June/July or other months, assume it's part of the next upcoming AY or a break
-            # This logic might need further refinement based on specific university breaks/summer terms
-            # For simplicity, if outside Aug-Dec or Jan-May, we'll default to the upcoming First semester
-            academic_year = f"{current_year}-{current_year + 1}"
-            semester = "First" # Or handle as 'Summer' or 'Break' if your system supports it.
-                               # For this app, we'll assign it to the upcoming First Sem AY.
+        else: # June/July or other months
+            messagebox.showerror("Invalid Academic Period", "Only First Semester (August-December) and Second Semester (January-May) are allowed. The current month does not fall into a recognized academic period.")
+            return None, None # Return None for academic_year and semester if invalid
 
         return academic_year, semester
 
-    def get_active_members_count_for_current_semester(self):
+    def get_active_members_count_for_current_semester(self, academic_year, semester):
         try:
-            academic_year, semester = self.get_current_academic_period()
-
             query = """
                 SELECT COUNT(DISTINCT student_no)
                 FROM serves
@@ -680,14 +685,17 @@ class OrganizationMenuPage(BasePage):
         self.filter_vars = {} # Dictionary to hold StringVar for filters
 
         current_ay, current_sem = self.get_current_academic_period()
+        default_ay_filter = current_ay if current_ay else ""
+        default_sem_filter = current_sem if current_sem else "All"
+
 
         ttk.Label(filter_frame, text="Academic Year:").grid(row=filter_row, column=0, sticky=tk.W, pady=2)
-        self.filter_vars['academic_year'] = tk.StringVar(value=current_ay) # Default to current AY
+        self.filter_vars['academic_year'] = tk.StringVar(value=default_ay_filter) # Default to current AY
         ttk.Entry(filter_frame, textvariable=self.filter_vars['academic_year']).grid(row=filter_row, column=1, sticky=(tk.W, tk.E), pady=2)
         filter_row += 1
 
         ttk.Label(filter_frame, text="Semester:").grid(row=filter_row, column=0, sticky=tk.W, pady=2)
-        self.filter_vars['semester'] = tk.StringVar(value="All") # Default to All for filters
+        self.filter_vars['semester'] = tk.StringVar(value=default_sem_filter) # Default to All for filters
         ttk.Combobox(filter_frame, textvariable=self.filter_vars['semester'], values=["All", "First", "Second"], state="readonly").grid(row=filter_row, column=1, sticky=(tk.W, tk.E), pady=2)
         filter_row += 1
 
@@ -727,23 +735,42 @@ class OrganizationMenuPage(BasePage):
         ttk.Button(update_members_frame, text="Edit member details", command=self.app.show_edit_membership_status_page, style='Login.TButton').grid(row=1, column=0, sticky=(tk.W, tk.E), pady=5)
 
 
-        # Active Members Section
-        active_members_frame = ttk.LabelFrame(left_panel, text="Active Members", padding="10")
-        active_members_frame.grid(row=2, column=0, sticky=(tk.N, tk.W, tk.E), columnspan=2, pady=(10, 0))
-        active_members_frame.grid_columnconfigure(0, weight=1)
+        # Active Members Percentage Section
+        active_percentage_frame = ttk.LabelFrame(left_panel, text="Active Members Percentage", padding="10")
+        active_percentage_frame.grid(row=2, column=0, sticky=(tk.N, tk.W, tk.E), columnspan=2, pady=(10, 0))
+        active_percentage_frame.grid_columnconfigure(0, weight=1)
+        active_percentage_frame.grid_columnconfigure(1, weight=1)
 
-        ttk.Button(active_members_frame, text="View Active Members", command=self.generate_active_members_only_report, style='Login.TButton').grid(row=0, column=0, sticky=(tk.W, tk.E), pady=5)
+        ttk.Label(active_percentage_frame, text="Last 'n' Semesters:").grid(row=0, column=0, sticky=tk.W, pady=2)
+        self.n_semesters_entry = ttk.Entry(active_percentage_frame)
+        self.n_semesters_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=2)
+        self.n_semesters_entry.insert(0, "1") # Default to last 1 semester
+
+        ttk.Button(active_percentage_frame, text="View Percentage", command=self.view_active_members_percentage, style='Login.TButton').grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
+
+        self.percentage_result_label = ttk.Label(active_percentage_frame, text="", wraplength=200)
+        self.percentage_result_label.grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=5)
+
 
         # --- Right Panel: Table of Members ---
-        self.member_list_tree = ttk.Treeview(self.member_tab, show="headings")
-        self.member_list_tree.grid(row=0, column=1, sticky=(tk.N, tk.W, tk.E, tk.S), padx=10, pady=10, rowspan=2) # Spans two rows
-        self.member_tab.grid_rowconfigure(0, weight=1) # Make table row expandable
-        self.member_tab.grid_columnconfigure(1, weight=1) # Make table column expandable
+        # Frame to contain Treeview and Scrollbars
+        tree_frame = ttk.Frame(self.member_tab)
+        tree_frame.grid(row=0, column=1, sticky=(tk.N, tk.W, tk.E, tk.S), padx=10, pady=10, rowspan=2)
+        tree_frame.grid_rowconfigure(0, weight=1)
+        tree_frame.grid_columnconfigure(0, weight=1)
 
-        # Scrollbar for member list treeview
-        member_list_scrollbar = ttk.Scrollbar(self.member_tab, orient="vertical", command=self.member_list_tree.yview)
-        member_list_scrollbar.grid(row=0, column=2, sticky=(tk.N, tk.S), rowspan=2)
-        self.member_list_tree.configure(yscrollcommand=member_list_scrollbar.set)
+        self.member_list_tree = ttk.Treeview(tree_frame, show="headings")
+        self.member_list_tree.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E, tk.S))
+
+        # Vertical Scrollbar
+        member_list_scrollbar_y = ttk.Scrollbar(tree_frame, orient="vertical", command=self.member_list_tree.yview)
+        member_list_scrollbar_y.grid(row=0, column=1, sticky=(tk.N, tk.S))
+        self.member_list_tree.configure(yscrollcommand=member_list_scrollbar_y.set)
+
+        # Horizontal Scrollbar
+        member_list_scrollbar_x = ttk.Scrollbar(tree_frame, orient="horizontal", command=self.member_list_tree.xview)
+        member_list_scrollbar_x.grid(row=1, column=0, sticky=(tk.W, tk.E))
+        self.member_list_tree.configure(xscrollcommand=member_list_scrollbar_x.set)
 
         self.set_default_treeview_columns()
 
@@ -825,6 +852,7 @@ class OrganizationMenuPage(BasePage):
                 for record in records:
                     self.member_list_tree.insert("", "end", values=record)
             else:
+                columns = ("Student No", "Full Name", "Degree Program", "Gender", "Batch", "Academic Year", "Semester", "Role", "Status", "Committee")
                 self.member_list_tree.insert("", "end", values=("No members found matching criteria.",) + ("",) * (len(columns) - 1))
         except ValueError:
             messagebox.showerror("Input Error", "Batch must be an integer.")
@@ -838,6 +866,8 @@ class OrganizationMenuPage(BasePage):
         try:
             # Determine current academic year and semester using the refined logic
             academic_year, semester = self.get_current_academic_period()
+            if not academic_year or not semester: # If get_current_academic_period showed an error
+                return
 
             query = """
             SELECT
@@ -871,6 +901,126 @@ class OrganizationMenuPage(BasePage):
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to retrieve active members: {err}")
 
+    def view_active_members_percentage(self):
+        self.percentage_result_label.config(text="") # Clear previous results
+
+        n_semesters_str = self.n_semesters_entry.get().strip()
+        if not n_semesters_str:
+            messagebox.showerror("Input Error", "Please enter the number of semesters (n).")
+            return
+        try:
+            n = int(n_semesters_str)
+            if n <= 0:
+                raise ValueError("n must be a positive integer.")
+        except ValueError as e:
+            messagebox.showerror("Input Error", f"Invalid input for 'n': {e}")
+            return
+
+        try:
+            # Get the current academic period
+            current_ay, current_sem = self.get_current_academic_period()
+            if not current_ay or not current_sem:
+                return # Error message already shown by get_current_academic_period
+
+            semesters_to_consider = []
+            
+            # Determine the `n` most recent semesters.
+            # This logic needs to correctly handle academic year transitions and semester order.
+            # Assuming 'First' comes before 'Second' in a given academic year for ordering purposes.
+            # This is a simplified approach; a more robust solution might pre-calculate
+            # all possible academic periods or use a dedicated date table if available.
+            
+            # Get all distinct academic periods for the current organization
+            cursor.execute("""
+                SELECT DISTINCT academic_year, semester
+                FROM serves
+                WHERE org_name = %s
+                ORDER BY academic_year DESC,
+                         CASE semester WHEN 'First' THEN 1 ELSE 2 END DESC;
+            """, (CURRENT_ORG_NAME,))
+            all_org_semesters = cursor.fetchall()
+
+            # Find the index of the current semester in the sorted list of all semesters
+            current_sem_tuple = (current_ay, current_sem)
+            
+            try:
+                # Need to iterate and convert for comparison, as current_sem_tuple might not be directly in all_org_semesters
+                # This handles cases where the current academic period might not yet have members registered.
+                found_current = False
+                for i, (ay, sem) in enumerate(all_org_semesters):
+                    if ay == current_ay and sem == current_sem:
+                        semesters_to_consider = all_org_semesters[i : i + n]
+                        found_current = True
+                        break
+                
+                if not found_current: # If current_sem is not in the list, we might need to construct the periods manually
+                    # This is a fallback if the current period isn't in the DB, but we still need 'n' recent.
+                    # This part can be complex depending on how 'recent' is strictly defined.
+                    # For simplicity, if current isn't in DB, we'll just take the 'n' most recent *from the DB*.
+                    semesters_to_consider = all_org_semesters[:n]
+                    if not semesters_to_consider: # If no semesters at all for the org
+                         messagebox.showinfo("No Data", f"No academic records found for {CURRENT_ORG_NAME} to calculate percentage.")
+                         return
+                    if len(semesters_to_consider) < n:
+                        messagebox.showwarning("Limited Data", f"Only {len(semesters_to_consider)} semesters available for {CURRENT_ORG_NAME}.")
+
+            except IndexError:
+                # This could happen if n is very large and goes beyond available historical data
+                semesters_to_consider = all_org_semesters 
+                if not semesters_to_consider:
+                    messagebox.showinfo("No Data", f"No academic records found for {CURRENT_ORG_NAME} to calculate percentage.")
+                    return
+                messagebox.showwarning("Limited Data", f"Only {len(semesters_to_consider)} semesters available for {CURRENT_ORG_NAME}. Showing data for all available semesters.")
+
+
+            if not semesters_to_consider:
+                self.percentage_result_label.config(text="No relevant semesters found.")
+                return
+
+            total_active = 0
+            total_inactive = 0
+            details_text = f"Active vs Inactive Members for {CURRENT_ORG_NAME} (last {n} semesters):\n"
+            
+            for ay, sem in semesters_to_consider:
+                # Query for active members in the current semester
+                query_active = """
+                    SELECT COUNT(DISTINCT student_no)
+                    FROM serves
+                    WHERE org_name = %s AND academic_year = %s AND semester = %s AND status = 'Active';
+                """
+                cursor.execute(query_active, (CURRENT_ORG_NAME, ay, sem))
+                active_count = cursor.fetchone()[0]
+
+                # Query for inactive members (all non-active statuses) in the current semester
+                query_inactive = """
+                    SELECT COUNT(DISTINCT student_no)
+                    FROM serves
+                    WHERE org_name = %s AND academic_year = %s AND semester = %s AND status != 'Active';
+                """
+                cursor.execute(query_inactive, (CURRENT_ORG_NAME, ay, sem))
+                inactive_count = cursor.fetchone()[0]
+
+                total_active += active_count
+                total_inactive += inactive_count
+                details_text += f"- {ay} {sem}: Active: {active_count}, Inactive: {inactive_count}\n"
+
+            overall_total = total_active + total_inactive
+            if overall_total > 0:
+                active_percentage = (total_active / overall_total) * 100
+                inactive_percentage = (total_inactive / overall_total) * 100
+                result_text = (f"Overall (last {n} semesters):\n"
+                               f"Active: {total_active} ({active_percentage:.2f}%)\n"
+                               f"Inactive: {total_inactive} ({inactive_percentage:.2f}%)\n\n"
+                               + details_text)
+            else:
+                result_text = "No member data found for the specified semesters."
+
+            self.percentage_result_label.config(text=result_text)
+
+        except mysql.connector.Error as err:
+            messagebox.showerror("Database Error", f"Failed to calculate percentages: {err}")
+        except Exception as e:
+            messagebox.showerror("Error", f"An unexpected error occurred: {e}")
 
 class AddNewMemberPage(BasePage):
     def __init__(self, master, app_instance):
@@ -890,19 +1040,19 @@ class AddNewMemberPage(BasePage):
                 self.semester_combobox.grid(row=i + 1, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
                 self.semester_combobox.set("First")
                 self.entries['semester'] = self.semester_combobox
-            elif text == "Role:": # Explicitly assign role combobox
+            elif text == "Role:": 
                 self.role_options = ["Member", "President", "Vice President", "EAC Chairperson", "Secretary", "Finance Chairperson", "SCC Chairperson", "MC Chairperson"]
                 self.role_combobox = ttk.Combobox(self, values=self.role_options, state="readonly")
                 self.role_combobox.grid(row=i + 1, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
                 self.role_combobox.set("Member")
                 self.entries['role'] = self.role_combobox
-            elif text == "Status:": # Explicitly assign status combobox
+            elif text == "Status:": 
                 self.status_options = ["Active", "Inactive", "Disaffiliated", "Alumni"]
                 self.status_combobox = ttk.Combobox(self, values=self.status_options, state="readonly")
                 self.status_combobox.grid(row=i + 1, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
                 self.status_combobox.set("Active")
                 self.entries['status'] = self.status_combobox
-            elif text == "Committee:": # Explicitly assign committee combobox
+            elif text == "Committee:": 
                 self.committee_options = ["Executive", "Internal Academics", "External Academics", "Secretariat", "Finance", "Socio-Cultural", "Membership"]
                 self.committee_combobox = ttk.Combobox(self, values=self.committee_options, state="readonly")
                 self.committee_combobox.grid(row=i + 1, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
@@ -922,7 +1072,7 @@ class AddNewMemberPage(BasePage):
         role = self.entries['role'].get().strip()
         status = self.entries['status'].get().strip()
         committee = self.entries['committee'].get().strip()
-        membership_fee = 250.00 # Assuming a default fee
+        membership_fee = 250.00 
 
         if not all([student_no, academic_year, semester, role, status, committee]):
             messagebox.showerror("Input Error", "Please fill in all fields.")
@@ -967,7 +1117,7 @@ class AddNewMemberPage(BasePage):
 
             cnx.commit()
             messagebox.showinfo("Success", f"Member {student_no} added to {CURRENT_ORG_NAME} successfully!")
-            self.app.show_organization_menu() # Go back to main organization menu
+            self.app.show_organization_menu()
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to add member: {err}")
 
@@ -1184,7 +1334,7 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Organization Management System")
-        self.geometry("1200x800") # Adjusted size for more content
+        self.geometry("1200x900") # Adjusted size for more content
 
         self.current_page = None
         self.pages = {}
