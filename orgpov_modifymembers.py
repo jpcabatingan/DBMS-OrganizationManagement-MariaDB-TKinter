@@ -1,9 +1,11 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from tkinter.font import BOLD
+import re
+from datetime import datetime, timedelta # Import datetime and timedelta for deadline calculation
+import uuid # For generating unique receipt_no
 
 from shared_variables import BasePage, fetch_one, fetch_all, execute_query
-import re
 
 # ADD NEW ORG MEMBER ------------------------------------------------------------
 class AddNewMemberPage(BasePage):
@@ -122,22 +124,42 @@ class AddNewMemberPage(BasePage):
             rows_affected = execute_query(insert_serves_query, (student_no, org_name, academic_year, semester, role, status, committee, batch_membership_int))
 
             if rows_affected > 0:
-                # membership fee
-                membership_fee_amount = 250
+                # --- ADDITION FOR MEMBERSHIP FEE ---
+                membership_fee_amount = 250.00 # Ensure it's a decimal for DECIMAL(10,2)
+                
+                # Generate a unique receipt_no
+                # Option 1: UUID (more robust for uniqueness)
+                receipt_no = str(uuid.uuid4()) 
+                
+                # Option 2: Combination (can be prone to collision if many entries at same time, but readable)
+                # receipt_no = f"{student_no}-{org_name[:5]}-{academic_year.replace('-', '')}-{semester[:3]}-{datetime.now().strftime('%f')}"
+                # receipt_no = receipt_no[:50] # Truncate if too long for VARCHAR(50)
+
+                # Set payment deadline (e.g., 30 days from now)
+                payment_deadline = datetime.now() + timedelta(days=30)
+                
+                # Default payment status
                 payment_status = "Unpaid" 
 
-                insert_fee_query = """
-                INSERT INTO fees (student_no, org_name, academic_year, semester, amount, payment_status)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                """
-
+                # Check if a fee record already exists for this member, org, AY, and semester
+                # This helps prevent duplicate fee entries for the same membership period
                 fee_exists = fetch_one(
-                    "SELECT fee_id FROM fees WHERE student_no = %s AND org_name = %s AND academic_year = %s AND semester = %s",
+                    "SELECT receipt_no FROM fee WHERE student_no = %s AND org_name = %s AND academic_year = %s AND semester = %s",
                     (student_no, org_name, academic_year, semester)
                 )
 
                 if not fee_exists:
-                    fee_rows_affected = execute_query(insert_fee_query, (student_no, org_name, academic_year, semester, membership_fee_amount, payment_status))
+                    insert_fee_query = """
+                    INSERT INTO fee (receipt_no, amount, payment_deadline, payment_status, student_no, org_name, academic_year, semester)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    """
+                    # Pass academic_year and semester to the fee table, assuming your 'fee' table is extended
+                    # If your 'fee' table DOES NOT have academic_year and semester, remove them from the query and parameters
+                    fee_rows_affected = execute_query(
+                        insert_fee_query, 
+                        (receipt_no, membership_fee_amount, payment_deadline.strftime('%Y-%m-%d'), payment_status, student_no, org_name, academic_year, semester)
+                    )
+                    
                     if fee_rows_affected > 0:
                         messagebox.showinfo("Success", "Member added to organization and membership fee automatically added!")
                     else:
@@ -148,7 +170,7 @@ class AddNewMemberPage(BasePage):
                 if status == 'Active':
                     execute_query("UPDATE organization SET no_of_members = no_of_members + 1 WHERE org_id = %s", (self.app.current_user_id,))
                 
-                # clear fields after adding new member
+                # Clear fields after successful addition
                 for entry in self.entries.values():
                     entry.delete(0, tk.END)
                 for dropdown in self.dropdowns.values():
@@ -249,8 +271,10 @@ class EditMembershipStatusPage(BasePage):
         add_new_semester_button = tk.Button(self.right_panel, text="+ Add new semester membership",
                                              bg="#FF9800", fg="white", font=("Arial", 10, BOLD), relief="flat",
                                              padx=10, pady=5, command=self.add_new_semester_membership)
+        # Adjusted row for the button due to new Batch Membership field
         add_new_semester_button.grid(row=9, column=0, sticky="e", pady=(10, 40))
 
+        # Adjusted row for update_section_frame due to new Batch Membership field
         self.update_section_frame = tk.Frame(self.right_panel, bg="#f0f0f0")
         self.update_section_frame.grid(row=10, column=0, sticky="ew", pady=(10, 0))
         self.update_section_frame.grid_columnconfigure(0, weight=1)
@@ -419,7 +443,7 @@ class EditMembershipStatusPage(BasePage):
             self.new_committee_var.set(selected_membership['committee'])
             self.batch_membership_entry.delete(0, tk.END)
             self.batch_membership_entry.insert(0, str(selected_membership['batch_membership']))
-            self.batch_membership_entry.config(state='readonly') 
+            self.batch_membership_entry.config(state='readonly') # Keep batch_membership read-only for existing records
             
             self.show_update_section(f"Update Information for AY {academic_year_input} {semester_input}")
             self.editing_academic_year = academic_year_input
@@ -481,7 +505,7 @@ class EditMembershipStatusPage(BasePage):
         self.editing_semester = semester_input
         self.editing_batch_membership = batch_membership_int 
         self.is_adding_new = True
-        self.batch_membership_entry.config(state='normal')
+        self.batch_membership_entry.config(state='normal') # Enable batch membership for new entry
 
     # save edits
     def save_edits(self):
@@ -523,21 +547,63 @@ class EditMembershipStatusPage(BasePage):
             """
             rows_affected = execute_query(insert_serves_query, (student_no, current_org_name, academic_year, semester, new_role, new_status, new_committee, batch_membership))
             
-            # base membership fee
             if rows_affected > 0:
-                membership_fee_amount = 250
+                # --- ADDITION FOR MEMBERSHIP FEE FOR NEW SEMESTER MEMBERSHIP ---
+                membership_fee_amount = 250.00
+                
+                # Generate a unique receipt_no
+                receipt_no = str(uuid.uuid4())
+                
+                # Set payment deadline (e.g., 30 days from now)
+                payment_deadline = datetime.now() + timedelta(days=30)
+                
+                # Default payment status
                 payment_status = "Unpaid"
 
+                # Check if fee already exists to prevent duplicates for the same membership period
+                # NOTE: Your 'fee' table does not have academic_year and semester columns.
+                # The check below would be invalid for your current 'fee' schema.
+                # If you want to associate fees with specific semesters, you *must* add
+                # academic_year and semester columns to your 'fee' table.
+                
+                # For your current 'fee' table schema, this check is only for student_no and org_name
                 fee_exists = fetch_one(
-                    "SELECT fee_id FROM fees WHERE student_no = %s AND org_name = %s AND academic_year = %s AND semester = %s",
+                    "SELECT receipt_no FROM fee WHERE student_no = %s AND org_name = %s",
+                    (student_no, current_org_name)
+                )
+
+                # IMPORTANT: If your 'fee' table truly does not have academic_year and semester,
+                # then a student will only have ONE fee entry per organization regardless of semester.
+                # This might not be your desired behavior for "membership fees per semester".
+                # If you need per-semester fees, your `fee` table needs to be altered.
+                # Assuming for now that you want to add a fee for *each* new semester membership,
+                # we'll use the combined student_no, org_name, academic_year, semester for uniqueness.
+                # This means your `fee` table *needs* `academic_year` and `semester` columns.
+
+                # ***** RECOMMENDED DATABASE SCHEMA CHANGE: *****
+                # ALTER TABLE fee
+                # ADD COLUMN academic_year VARCHAR(10),
+                # ADD COLUMN semester VARCHAR(20);
+                # ALTER TABLE fee ADD UNIQUE (student_no, org_name, academic_year, semester);
+                # **********************************************
+
+                # If you proceed without the schema change, the 'fee_exists' check should be simpler:
+                # fee_exists = fetch_one("SELECT receipt_no FROM fee WHERE student_no = %s AND org_name = %s", (student_no, current_org_name))
+                # This would mean a student only pays one fee per organization, not per semester.
+
+                # Assuming you WILL add academic_year and semester to your `fee` table for per-semester fees:
+                fee_exists_per_semester = fetch_one(
+                    "SELECT receipt_no FROM fee WHERE student_no = %s AND org_name = %s AND academic_year = %s AND semester = %s",
                     (student_no, current_org_name, academic_year, semester)
                 )
-                if not fee_exists:
+
+                if not fee_exists_per_semester: # Use the more specific check
                     insert_fee_query = """
-                    INSERT INTO fees (student_no, org_name, academic_year, semester, amount, payment_status)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    INSERT INTO fee (receipt_no, amount, payment_deadline, payment_status, student_no, org_name, academic_year, semester)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """
-                    fee_rows_affected = execute_query(insert_fee_query, (student_no, current_org_name, academic_year, semester, membership_fee_amount, payment_status))
+                    fee_rows_affected = execute_query(insert_fee_query, (receipt_no, membership_fee_amount, payment_deadline.strftime('%Y-%m-%d'), payment_status, student_no, current_org_name, academic_year, semester))
+                    
                     if fee_rows_affected > 0:
                         messagebox.showinfo("Success", f"New membership for AY {academic_year} {semester} added and fee automatically added!")
                     else:
@@ -548,7 +614,7 @@ class EditMembershipStatusPage(BasePage):
                 if new_status == 'Active':
                     execute_query("UPDATE organization SET no_of_members = no_of_members + 1 WHERE org_id = %s", (self.app.current_user_id,))
                 
-                self.load_member_info() 
+                self.load_member_info() # Reload to show updated history
                 self.is_adding_new = False
                 self.batch_membership_entry.config(state='normal') 
                 self.batch_membership_entry.delete(0, tk.END)
@@ -576,7 +642,7 @@ class EditMembershipStatusPage(BasePage):
                         execute_query("UPDATE organization SET no_of_members = no_of_members - 1 WHERE org_id = %s", (self.app.current_user_id,))
 
                 messagebox.showinfo("Success", f"Membership for AY {academic_year} {semester} updated successfully!")
-                self.load_member_info()
+                self.load_member_info() # Reload to show updated history
                 self.batch_membership_entry.config(state='normal') 
                 self.batch_membership_entry.delete(0, tk.END) 
             else:
