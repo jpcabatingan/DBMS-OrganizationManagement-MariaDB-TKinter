@@ -4,7 +4,6 @@ from tkinter import *
 from tkinter import ttk, messagebox, Toplevel
 from tkinter.font import BOLD
 import datetime
-from passlib.hash import pbkdf2_sha256 
 import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel
 from tkinter.font import BOLD
@@ -678,7 +677,7 @@ class AddNewMemberPage(BasePage):
                 self.entries[text.replace(":", "").replace(" ", "_").lower()] = entry
 
         self.role_options = ["Member", "Executive President", "VP Internal", "VP External", "Secretary", "Treasurer"]
-        self.status_options = ["Active", "Inactive", "Dismissed", "Alumni"]
+        self.status_options = ["Active", "Inactive", "Expelled", "Suspended", "Alumni"]
         self.committee_options = ["Executive", "Finance", "Logistics", "Publicity", "Internal Affairs", "External Affairs"]
 
         self.role_combobox = ttk.Combobox(self, values=self.role_options, state="readonly")
