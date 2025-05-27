@@ -4,6 +4,7 @@ from tkinter import ttk, messagebox, Toplevel
 from tkinter.font import BOLD
 import re
 
+# Import only what is necessary from shared_variables
 from shared_variables import (
     DB_CONFIG, cnx, cursor,
     connect_db, disconnect_db, execute_query, fetch_one, fetch_all, BasePage
@@ -11,9 +12,11 @@ from shared_variables import (
 
 # import orgpov classes
 from orgpov import OrganizationMenuPage
+
 from orgpov_modifymembers import AddNewMemberPage, EditMembershipStatusPage
 from orgpov_alumni import OrganizationAlumniPage
 # from orgpov_fees import OrganizationFeesPage # Uncomment when ready
+from orgpov_fees import OrganizationFeesPage
 
 # import member pov classes
 from memberpov import MemberMenuPage, ViewPersonalInfoPage, EditPersonalInfoPage, ViewRegisteredOrgsPage, ViewMembersUnpaidFeesPage
@@ -335,7 +338,8 @@ class App(tk.Tk):
         self.show_page('OrganizationAlumniPage', "Alumni Members Report", self.current_org_name)
 
     def show_org_fees_page(self):
-        messagebox.showinfo("Coming Soon", "Organization Fees page is not yet implemented.")
+        self.pages['OrganizationFeesPage'] = OrganizationFeesPage
+        self.show_page('OrganizationFeesPage')
 
     
     # authentication logout
