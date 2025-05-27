@@ -91,6 +91,8 @@ class BasePage(tk.Frame):
     def go_back(self):
         if self.app.current_user_type == 'organization' and self.app.current_org_name:
             self.app.show_organization_menu()
+        elif self.app.current_user_type == 'member' and self.app.current_user_type:
+            self.app.show_member_menu()
         elif self.app.current_user_type == 'admin':
             messagebox.showinfo("Coming Soon", "Admin menu is not yet implemented.") 
         else:
