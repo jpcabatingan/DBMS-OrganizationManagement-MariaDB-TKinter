@@ -3,7 +3,6 @@ from mysql.connector import errorcode
 from tkinter import *
 from tkinter import ttk, messagebox, Toplevel
 from tkinter.font import BOLD
-import datetime
 import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel
 from tkinter.font import BOLD
@@ -175,7 +174,7 @@ class AuthPage(ttk.Frame):
         ttk.Label(org_panel, text="Organization ID", font=("Arial", 10, BOLD)).grid(row=6, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
         self.signup_org_id_entry = ttk.Entry(org_panel, font=("Arial", 12))
         self.signup_org_id_entry.grid(row=7, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
-        ttk.Label(org_panel, text="Format: XXXXX", font=("Arial", 8), foreground='grey').grid(row=8, column=0, columnspan=2, sticky=tk.W, pady=(0, 20))
+        ttk.Label(org_panel, text="Format: XXXX", font=("Arial", 8), foreground='grey').grid(row=8, column=0, columnspan=2, sticky=tk.W, pady=(0, 20))
 
         ttk.Label(org_panel, text="Organization Name", font=("Arial", 10, BOLD)).grid(row=9, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
         self.signup_org_name_entry = ttk.Entry(org_panel, font=("Arial", 12))
@@ -676,9 +675,10 @@ class AddNewMemberPage(BasePage):
                 entry.grid(row=i + 1, column=1, sticky=(W, E), padx=5, pady=2)
                 self.entries[text.replace(":", "").replace(" ", "_").lower()] = entry
 
-        self.role_options = ["Member", "Executive President", "VP Internal", "VP External", "Secretary", "Treasurer"]
+
+        self.role_options = ["Member", "President", "Vice President", "EAC Chairperson", "Secretary", "Finance Chairperson", "SCC Chairperson", "MC Chairperson"]
         self.status_options = ["Active", "Inactive", "Expelled", "Suspended", "Alumni"]
-        self.committee_options = ["Executive", "Finance", "Logistics", "Publicity", "Internal Affairs", "External Affairs"]
+        self.committee_options = ["Executive", "Internal Academics", "External Academics", "Secretariat", "Finance", "Socio-Cultural", "Membership"]
 
         self.role_combobox = ttk.Combobox(self, values=self.role_options, state="readonly")
         self.role_combobox.grid(row=4, column=1, sticky=(W, E), padx=5, pady=2)
