@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS fee(
     payment_status VARCHAR(10) DEFAULT "Unpaid",
     student_no VARCHAR(10), 
     org_name VARCHAR(50),
+    academic_year VARCHAR(10) NOT NULL, 
+    semester VARCHAR(20) NOT NULL, 
     FOREIGN KEY (student_no) REFERENCES member(student_no) ON DELETE CASCADE,
     FOREIGN KEY (org_name) REFERENCES organization (org_name) ON DELETE CASCADE
 );
