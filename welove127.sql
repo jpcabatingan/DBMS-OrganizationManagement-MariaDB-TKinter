@@ -65,7 +65,11 @@ INSERT INTO member (student_no, first_name, middle_name, last_name, degree_progr
 ('2023-00002', 'Anais', NULL, 'Watterson', 'BS Applied Mathematics', 'F', 2023),
 ('2023-00003', 'Darwin', NULL, 'Watterson', 'BS Biology', 'M', 2023),
 ('2023-00004', 'Nicole', NULL, 'Watterson', 'BS Chemistry', 'F', 2023),
-('2023-00005', 'Richard', NULL, 'Watterson', 'BA Communication Arts', 'M', 2023);
+('2023-00005', 'Richard', NULL, 'Watterson', 'BA Communication Arts', 'M', 2023),
+('2020-00001', 'Finn', 'Da', 'Human', 'BS Computer Science', 'M', 2020),
+('2020-00002', 'Jake', 'Da', 'Dog', 'BS Biology', 'M', 2020),
+('2018-00001', 'Bubblegum', NULL, 'Princess', 'BS Chemistry', 'F', 2018),
+('2018-00002', 'Marceline', 'Da', 'Vampire Queen', 'BA Communication Arts', 'F', 2018);
 
 -- Initial Organizations
 INSERT INTO organization (org_id, org_name, no_of_members) VALUES
@@ -73,6 +77,7 @@ INSERT INTO organization (org_id, org_name, no_of_members) VALUES
 ('0002', 'YSES', 0),
 ('0003', 'COSS', 0),
 ('0004', 'DSG', 0);
+
 
 ---1. View all members of the organization by role, status, gender, degree program, batch (year of
 ---     membership), and committee. (Note: we assume one committee membership only per

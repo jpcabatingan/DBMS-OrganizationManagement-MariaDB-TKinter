@@ -322,22 +322,96 @@ class BasePage(ttk.Frame):
 # --- Member Pages (No changes from previous update, included for context) ---
 class MemberMenuPage(BasePage):
     def __init__(self, master, app_instance):
-        super().__init__(master, app_instance, "Member Menu")
-        self.create_member_menu_widgets()
+        super().__init__(master, app_instance, "")
+        for widget in self.winfo_children():
+            if isinstance(widget, ttk.Label) and widget.cget("text") == "":
+                widget.destroy()
 
-    def create_member_menu_widgets(self):
+        self.rowconfigure(0, weight = 1)
+        self.rowconfigure(1, weight = 1)
+        self.rowconfigure(2, weight = 1)
+        self.rowconfigure(3, weight = 1)
+        self.rowconfigure(4, weight = 1)
+        self.columnconfigure(0, weight = 1)
+        self.columnconfigure(1, weight = 3)
+
+        # Top Header Frame
+        header_frame = ttk.Frame(self, style='AuthPanel.TFrame', padding="15")
+        header_frame.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E), padx=10, pady=10, columnspan=2)
+        header_frame.grid_columnconfigure(0, weight=0) # Icon
+        header_frame.grid_columnconfigure(1, weight=1) # Welcome text
+        header_frame.grid_columnconfigure(2, weight=0) # Logout button
+
+        try:
+            cursor.execute("SELECT first_name, middle_name, last_name FROM member WHERE student_no = %s", (CURRENT_USER_ID,))
+            member_info = cursor.fetchone()
+
+            if member_info:
+                ttk.Label(header_frame, text="Welcome, " + member_info[0], font=("Arial", 20, BOLD)).grid(row=0, column=1, sticky=tk.W, pady=(0, 5))
+        except mysql.connector.Error as err:
+            messagebox.showerror("Database Error", f"Failed to retrieve personal info: {err}")
+
         self.back_button.grid_forget()
 
-        row_idx = 1
-        ttk.Button(self, text="View Personal Info", command=self.app.show_view_personal_info_page).grid(row=row_idx, column=0, sticky=tk.W, pady=5)
-        row_idx += 1
-        ttk.Button(self, text="Edit Personal Info", command=self.app.show_edit_personal_info_page).grid(row=row_idx, column=0, sticky=tk.W, pady=5)
-        row_idx += 1
-        ttk.Button(self, text="View Registered Organizations", command=self.app.show_view_registered_orgs_page).grid(row=row_idx, column=0, sticky=tk.W, pady=5)
-        row_idx += 1
-        ttk.Button(self, text="View Unpaid Fees (All Organizations)", command=self.app.show_view_members_unpaid_fees_page).grid(row=row_idx, column=0, sticky=tk.W, pady=5)
-        row_idx += 1
-        ttk.Button(self, text="Logout", command=self.app.logout).grid(row=row_idx + 1, column=0, sticky=tk.W, pady=20)
+        pfp_frame = ttk.Frame(self)
+        pfp_frame.grid(row = 1, column = 0, sticky=(tk.N, tk.W, tk.E), padx=10, pady=10) 
+        label = ttk.Label(pfp_frame, text= "im tryingggg",)
+        label.grid(row = 1, column = 0)
+
+        pfp_frame = ttk.Frame(self)
+        pfp_frame.grid(row = 2, column = 0, sticky=(tk.N, tk.W, tk.E), padx=10, pady=10) 
+        ttk.Button(pfp_frame, text="View Registered Organizations", command=self.app.show_view_registered_orgs_page).grid(row=1, column=0, sticky=tk.W, pady=5)
+
+        pfp_frame = ttk.Frame(self)
+        pfp_frame.grid(row = 3, column = 0, sticky=(tk.N, tk.W, tk.E), padx=10, pady=10) 
+        ttk.Button(pfp_frame, text="View Unpaid Fees (All Organizations)", command=self.app.show_view_members_unpaid_fees_page).grid(row=1, column=0, sticky=tk.W, pady=5)
+
+        
+
+        pfp_frame = ttk.Frame(self)
+        pfp_frame.grid(row = 4, column = 0, sticky=(tk.N, tk.W, tk.E), padx=10, pady=10) 
+        ttk.Button(pfp_frame, text="Logout", command=self.app.logout).grid(row=0, column=0, sticky=tk.W, pady=20)
+       
+        
+        # pfp_frame = ttk.Frame(MemberMenuPage,width = 200, height = 200, bg = "skyblue")
+        # pfp_frame.rowconfigure(0, weight = 1)
+        # pfp_frame.rowconfigure(1, weight = 1)
+        # pfp_frame.rowconfigure(2, weight = 1)
+        # pfp_frame.rowconfigure(3, weight = 1)
+        # pfp_frame.columnconfigure(0, weight = 3)
+        # pfp_frame.columnfigure(1, weight= 1)
+        # # pfp_frame.grid(row = 0, column = 0,sticky=(tk.N, tk.W, tk.E), padx=10, pady=10 )
+        # ttk.Label(pfp_frame, text= "im tryingggg").grid(row = 0)
+        # ttk.Label(pfp_frame, text= "im tryingggg").grid(row = 1)
+        # ttk.Label(pfp_frame, text= "im tryingggg").grid(row = 2)
+        # ttk.Label(pfp_frame, text= "im tryingggg").grid(row = 3)
+
+        # row_idx = 1
+        # pfp_frame = ttk.Frame(self, style= 'AuthPanel.TFrame', padding= '15')
+        # pfp_frame.grid(row=1, column=0, sticky=(tk.N, tk.W, tk.E), padx=10, pady=10, columnspan=4)
+        # pfp_frame2 = ttk.Frame(self, style= 'AuthPanel.TFrame', padding= '15')
+        # pfp_frame2.grid(row=1,column=1, sticky=(tk.N, tk.W, tk.E), padx=10, pady=10, columnspan=4)
+        
+        # ttk.Label(pfp_frame, text= "heyyy", font=("Arial", 24, BOLD), foreground='black').grid(row=1, column=0, columnspan=3, sticky=tk.W, pady=(0, 5))
+        # ttk.Label(pfp_frame2, text= "heyyy", font=("Arial", 24, BOLD), foreground='black').grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=(0, 5))
+
+        # # ttk.Button(self, text="View Personal Info", command=self.app.show_view_personal_info_page).grid(row=row_idx, column=0, sticky=tk.W, pady=5)
+        # row_idx += 1
+
+        
+        # ttk.Button(self, text="Edit Personal Info", command=self.app.show_edit_personal_info_page).grid(row=row_idx, column=0, sticky=tk.W, pady=5)
+        # row_idx += 1
+        # button_frame = ttk.Frame(self, style= 'AuthPanel.TFrame', padding = '15')
+        # button_frame.grid(row = 3, column = 0, sticky = (tk.N, tk.W, tk.E), padx = 10, pady=10, columnspan=4)
+
+       
+        # ttk.Button(button_frame, text="View Registered Organizations", command=self.app.show_view_registered_orgs_page).grid(row=row_idx, column=0, sticky=tk.W, pady=5)
+        # row_idx += 1
+        # button_frame2 = ttk.Frame(self, style= 'AuthPanel.TFrame', padding = '15')
+        # button_frame2.grid(row = 4, column = 0, sticky = (tk.N, tk.W, tk.E), padx = 10, pady=10, columnspan=4)
+        # ttk.Button(button_frame2, text="View Unpaid Fees (All Organizations)", command=self.app.show_view_members_unpaid_fees_page).grid(row=row_idx, column=0, sticky=tk.W, pady=5)
+        # row_idx += 1
+        # ttk.Button(self, text="Logout", command=self.app.logout).grid(row=row_idx + 1, column=0, sticky=tk.W, pady=20)
 
 class ViewPersonalInfoPage(BasePage):
     def __init__(self, master, app_instance):
