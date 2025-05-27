@@ -262,7 +262,7 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Organization Management System")
-        self.geometry("1200x920")
+        self.geometry("1500x920")
 
         self.current_page = None
         self.pages = {}
