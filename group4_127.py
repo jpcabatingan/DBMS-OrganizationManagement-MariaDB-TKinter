@@ -95,11 +95,11 @@ class AuthPage(ttk.Frame):
 
         ttk.Label(member_panel, text="Student no.", font=("Arial", 10, BOLD)).grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=(10, 0)) # Adjusted columnspan
         self.member_student_no_entry = ttk.Entry(member_panel, font=("Arial", 12))
-        self.member_student_no_entry.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 5)) # Spans 2 columns
+        self.member_student_no_entry.grid(row=3, column=0, columnspan=1, sticky=(tk.W, tk.E), pady=(0, 5)) # Spans 2 columns
         ttk.Label(member_panel, text="Format: 20XX-XXXXX", font=("Arial", 8), foreground='grey').grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=(0, 20)) # Spans 2 columns
 
         # Login button should now be in column 2, aligning with the image
-        ttk.Button(member_panel, text="Log-in", style='Login.TButton', command=self.member_login).grid(row=3, column=2, sticky=tk.E, padx=(5,0))
+        ttk.Button(member_panel, text="Log-in", style='Login.TButton', command=self.member_login).grid(row=3, column=1, sticky=tk.E, padx=(5,0))
 
 
         # --- Separator Line for Member Section ---
@@ -146,8 +146,8 @@ class AuthPage(ttk.Frame):
         # Last Name field and Sign-up button - THIS IS THE CRUCIAL CHANGE
         ttk.Label(member_panel, text="Last Name", font=("Arial", 10, BOLD)).grid(row=15, column=0, sticky=tk.W, pady=(10, 0))
         self.signup_last_name_entry = ttk.Entry(member_panel, font=("Arial", 12))
-        self.signup_last_name_entry.grid(row=16, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5)) # Span columns 0 and 1
-        ttk.Button(member_panel, text="Sign-up", style='Login.TButton', command=self.member_signup).grid(row=16, column=2, sticky=tk.E, padx=(5,0)) # Button in column 2
+        self.signup_last_name_entry.grid(row=16, column=0, columnspan=1, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5)) # Span columns 0 and 1
+        ttk.Button(member_panel, text="Sign-up", style='Login.TButton', command=self.member_signup).grid(row=16, column=1, sticky=tk.E, padx=(5,0)) # Button in column 2
 
         # --- Organization Panel (Right Side) ---
         org_panel = ttk.Frame(self, style='AuthPanel.TFrame', padding="30")
