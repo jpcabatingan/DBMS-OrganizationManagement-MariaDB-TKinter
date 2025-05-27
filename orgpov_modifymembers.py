@@ -2,12 +2,12 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from tkinter.font import BOLD
 import re
-from datetime import datetime, timedelta # Import datetime and timedelta for deadline calculation
-import uuid # For generating unique receipt_no
+from datetime import datetime, timedelta
+import uuid
 
 from shared_variables import BasePage, fetch_one, fetch_all, execute_query
 
-# ADD NEW ORG MEMBER ------------------------------------------------------------
+# Organization POV - Add New Member ---------------------------------------
 class AddNewMemberPage(BasePage):
     def __init__(self, master, app_instance):
         super().__init__(master, app_instance, title_text="Add New Organization Member")
@@ -124,25 +124,14 @@ class AddNewMemberPage(BasePage):
             rows_affected = execute_query(insert_serves_query, (student_no, org_name, academic_year, semester, role, status, committee, batch_membership_int))
 
             if rows_affected > 0:
-                # --- ADDITION FOR MEMBERSHIP FEE ---
-                membership_fee_amount = 250.00 # Ensure it's a decimal for DECIMAL(10,2)
+                membership_fee_amount = 250.00
                 
-                # Generate a unique receipt_no
-                # Option 1: UUID (more robust for uniqueness)
                 receipt_no = str(uuid.uuid4()) 
                 
-                # Option 2: Combination (can be prone to collision if many entries at same time, but readable)
-                # receipt_no = f"{student_no}-{org_name[:5]}-{academic_year.replace('-', '')}-{semester[:3]}-{datetime.now().strftime('%f')}"
-                # receipt_no = receipt_no[:50] # Truncate if too long for VARCHAR(50)
-
-                # Set payment deadline (e.g., 30 days from now)
                 payment_deadline = datetime.now() + timedelta(days=30)
                 
-                # Default payment status
                 payment_status = "Unpaid" 
 
-                # Check if a fee record already exists for this member, org, AY, and semester
-                # This helps prevent duplicate fee entries for the same membership period
                 fee_exists = fetch_one(
                     "SELECT receipt_no FROM fee WHERE student_no = %s AND org_name = %s AND academic_year = %s AND semester = %s",
                     (student_no, org_name, academic_year, semester)
@@ -153,8 +142,6 @@ class AddNewMemberPage(BasePage):
                     INSERT INTO fee (receipt_no, amount, payment_deadline, payment_status, student_no, org_name, academic_year, semester)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """
-                    # Pass academic_year and semester to the fee table, assuming your 'fee' table is extended
-                    # If your 'fee' table DOES NOT have academic_year and semester, remove them from the query and parameters
                     fee_rows_affected = execute_query(
                         insert_fee_query, 
                         (receipt_no, membership_fee_amount, payment_deadline.strftime('%Y-%m-%d'), payment_status, student_no, org_name, academic_year, semester)
@@ -165,12 +152,11 @@ class AddNewMemberPage(BasePage):
                     else:
                         messagebox.showwarning("Warning", "Member added, but failed to automatically add membership fee. Please add it manually.")
                 else:
-                     messagebox.showwarning("Warning", "Member added, but a membership fee for this period already exists. Skipping fee creation.")
+                    messagebox.showwarning("Warning", "Member added, but a membership fee for this period already exists. Skipping fee creation.")
 
                 if status == 'Active':
                     execute_query("UPDATE organization SET no_of_members = no_of_members + 1 WHERE org_id = %s", (self.app.current_user_id,))
                 
-                # Clear fields after successful addition
                 for entry in self.entries.values():
                     entry.delete(0, tk.END)
                 for dropdown in self.dropdowns.values():
@@ -189,7 +175,7 @@ class AddNewMemberPage(BasePage):
             messagebox.showerror("Database Error", f"An error occurred: {e}")
 
 
-# EDIT MEMBER'S MEMBERSHIP DETAILS ------------------------------------------------------------
+# Organization POV - Edit Membership Status ---------------------------------------
 class EditMembershipStatusPage(BasePage):
     def __init__(self, master, app_instance):
         super().__init__(master, app_instance, title_text="Edit Member Membership Status")
@@ -261,41 +247,41 @@ class EditMembershipStatusPage(BasePage):
         self.semester_dropdown_select.grid(row=5, column=0, sticky="ew", pady=(0, 10))
         self.semester_dropdown_select.set("First Semester")
 
-        # ADDED BATCH MEMBERSHIP INPUT FIELD TO RIGHT PANEL
-        tk.Label(self.right_panel, text="Batch Membership", font=("Arial", 10, BOLD), bg="#f0f0f0").grid(row=6, column=0, sticky="w", pady=(10, 0))
+        self.batch_membership_entry_label = tk.Label(self.right_panel, text="Batch Membership", font=("Arial", 10, BOLD), bg="#f0f0f0")
+        self.batch_membership_entry_label.grid(row=6, column=0, sticky="w", pady=(10, 0))
         self.batch_membership_entry = ttk.Entry(self.right_panel, font=("Arial", 12))
         self.batch_membership_entry.grid(row=7, column=0, sticky="ew", pady=(0, 10))
-        tk.Label(self.right_panel, text="Format: 20XX", font=("Arial", 8), fg="grey", bg="#f0f0f0").grid(row=8, column=0, sticky="w", pady=(0, 10))
+        self.batch_membership_format_label = tk.Label(self.right_panel, text="Format: YYYY", font=("Arial", 8), fg="grey", bg="#f0f0f0")
+        self.batch_membership_format_label.grid(row=8, column=0, sticky="w", pady=(0, 10))
 
 
         add_new_semester_button = tk.Button(self.right_panel, text="+ Add new semester membership",
                                              bg="#FF9800", fg="white", font=("Arial", 10, BOLD), relief="flat",
                                              padx=10, pady=5, command=self.add_new_semester_membership)
-        # Adjusted row for the button due to new Batch Membership field
         add_new_semester_button.grid(row=9, column=0, sticky="e", pady=(10, 40))
 
-        # Adjusted row for update_section_frame due to new Batch Membership field
         self.update_section_frame = tk.Frame(self.right_panel, bg="#f0f0f0")
         self.update_section_frame.grid(row=10, column=0, sticky="ew", pady=(10, 0))
         self.update_section_frame.grid_columnconfigure(0, weight=1)
         self.update_section_frame.grid_columnconfigure(1, weight=1)
 
-        tk.Label(self.update_section_frame, text="Update Information for AY XXXX - XXXX nth Semester",
-                 font=("Arial", 14, BOLD), bg="#f0f0f0", fg="black").grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 20))
+        self.update_section_title = tk.Label(self.update_section_frame, text="Update Information for AY XXXX - XXXX nth Semester",
+                                            font=("Arial", 14, BOLD), bg="#f0f0f0", fg="black")
+        self.update_section_title.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 20))
 
         self.new_role_var = tk.StringVar(self.update_section_frame)
         self.new_status_var = tk.StringVar(self.update_section_frame)
         self.new_committee_var = tk.StringVar(self.update_section_frame)
 
         self.new_role_dropdown = ttk.Combobox(self.update_section_frame, textvariable=self.new_role_var,
-                                                values=["Member", "President", "Vice President", "Secretary", "Treasurer", "Auditor", "EAC Chairperson", "SCC Chairperson", "MC Chairperson", "Finance Chairperson", "Secretariat Chairperson"],
-                                                state="readonly", font=("Arial", 12))
+                                               values=["Member", "President", "Vice President", "Secretary", "Treasurer", "Auditor", "EAC Chairperson", "SCC Chairperson", "MC Chairperson", "Finance Chairperson", "Secretariat Chairperson"],
+                                               state="readonly", font=("Arial", 12))
         self.new_role_dropdown.grid(row=1, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
         self.new_role_var.set("<New Role>")
 
         self.new_status_dropdown = ttk.Combobox(self.update_section_frame, textvariable=self.new_status_var,
-                                                values=["Active", "Inactive", "On-Leave", "Alumni", "Disaffiliated"],
-                                                state="readonly", font=("Arial", 12))
+                                                 values=["Active", "Inactive", "On-Leave", "Alumni", "Disaffiliated"],
+                                                 state="readonly", font=("Arial", 12))
         self.new_status_dropdown.grid(row=2, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
         self.new_status_var.set("<New Status>")
 
@@ -312,7 +298,7 @@ class EditMembershipStatusPage(BasePage):
 
         self.hide_update_section()
 
-    # get member details
+    # get member info and display
     def load_member_info(self):
         student_no = self.student_no_entry.get().strip()
         if not student_no:
@@ -350,7 +336,7 @@ class EditMembershipStatusPage(BasePage):
             self.clear_member_info()
             messagebox.showerror("Error", "Member not found.")
 
-    # display member's history as a member of the org
+    # display past service in organization
     def display_serves_history(self):
         for label in self.serves_history_labels:
             label.destroy()
@@ -392,7 +378,7 @@ class EditMembershipStatusPage(BasePage):
             no_history_label.grid(row=0, column=0, sticky="w", pady=(10,0))
             self.serves_history_labels.append(no_history_label)
 
-    # clear membership details
+    # clear member status first
     def clear_member_info(self):
         self.member_data = None
         for label in self.member_info_labels.values():
@@ -409,7 +395,7 @@ class EditMembershipStatusPage(BasePage):
         self.batch_membership_entry.config(state='normal') 
         self.batch_membership_entry.delete(0, tk.END) 
 
-    # edit membership status for a given AY and Semester
+    # edit membership status
     def show_edit_section(self):
         if not self.member_data:
             messagebox.showerror("Error", "Please load member info first.")
@@ -443,7 +429,7 @@ class EditMembershipStatusPage(BasePage):
             self.new_committee_var.set(selected_membership['committee'])
             self.batch_membership_entry.delete(0, tk.END)
             self.batch_membership_entry.insert(0, str(selected_membership['batch_membership']))
-            self.batch_membership_entry.config(state='readonly') # Keep batch_membership read-only for existing records
+            self.batch_membership_entry.config(state='readonly')
             
             self.show_update_section(f"Update Information for AY {academic_year_input} {semester_input}")
             self.editing_academic_year = academic_year_input
@@ -455,7 +441,7 @@ class EditMembershipStatusPage(BasePage):
             self.batch_membership_entry.config(state='normal') 
             self.batch_membership_entry.delete(0, tk.END)
 
-    # renew membership / add a new semester of membership
+    # member serves for another semester
     def add_new_semester_membership(self):
         if not self.member_data:
             messagebox.showerror("Error", "Please load member info first.")
@@ -505,8 +491,8 @@ class EditMembershipStatusPage(BasePage):
         self.editing_semester = semester_input
         self.editing_batch_membership = batch_membership_int 
         self.is_adding_new = True
-        self.batch_membership_entry.config(state='normal') # Enable batch membership for new entry
-
+        self.batch_membership_entry.config(state='normal') 
+        
     # save edits
     def save_edits(self):
         if not self.member_data:
@@ -548,110 +534,58 @@ class EditMembershipStatusPage(BasePage):
             rows_affected = execute_query(insert_serves_query, (student_no, current_org_name, academic_year, semester, new_role, new_status, new_committee, batch_membership))
             
             if rows_affected > 0:
-                # --- ADDITION FOR MEMBERSHIP FEE FOR NEW SEMESTER MEMBERSHIP ---
                 membership_fee_amount = 250.00
                 
-                # Generate a unique receipt_no
                 receipt_no = str(uuid.uuid4())
                 
-                # Set payment deadline (e.g., 30 days from now)
                 payment_deadline = datetime.now() + timedelta(days=30)
                 
-                # Default payment status
                 payment_status = "Unpaid"
 
-                # Check if fee already exists to prevent duplicates for the same membership period
-                # NOTE: Your 'fee' table does not have academic_year and semester columns.
-                # The check below would be invalid for your current 'fee' schema.
-                # If you want to associate fees with specific semesters, you *must* add
-                # academic_year and semester columns to your 'fee' table.
-                
-                # For your current 'fee' table schema, this check is only for student_no and org_name
-                fee_exists = fetch_one(
-                    "SELECT receipt_no FROM fee WHERE student_no = %s AND org_name = %s",
-                    (student_no, current_org_name)
-                )
-
-                # IMPORTANT: If your 'fee' table truly does not have academic_year and semester,
-                # then a student will only have ONE fee entry per organization regardless of semester.
-                # This might not be your desired behavior for "membership fees per semester".
-                # If you need per-semester fees, your `fee` table needs to be altered.
-                # Assuming for now that you want to add a fee for *each* new semester membership,
-                # we'll use the combined student_no, org_name, academic_year, semester for uniqueness.
-                # This means your `fee` table *needs* `academic_year` and `semester` columns.
-
-                # ***** RECOMMENDED DATABASE SCHEMA CHANGE: *****
-                # ALTER TABLE fee
-                # ADD COLUMN academic_year VARCHAR(10),
-                # ADD COLUMN semester VARCHAR(20);
-                # ALTER TABLE fee ADD UNIQUE (student_no, org_name, academic_year, semester);
-                # **********************************************
-
-                # If you proceed without the schema change, the 'fee_exists' check should be simpler:
-                # fee_exists = fetch_one("SELECT receipt_no FROM fee WHERE student_no = %s AND org_name = %s", (student_no, current_org_name))
-                # This would mean a student only pays one fee per organization, not per semester.
-
-                # Assuming you WILL add academic_year and semester to your `fee` table for per-semester fees:
                 fee_exists_per_semester = fetch_one(
                     "SELECT receipt_no FROM fee WHERE student_no = %s AND org_name = %s AND academic_year = %s AND semester = %s",
                     (student_no, current_org_name, academic_year, semester)
                 )
 
-                if not fee_exists_per_semester: # Use the more specific check
+                if not fee_exists_per_semester:
                     insert_fee_query = """
                     INSERT INTO fee (receipt_no, amount, payment_deadline, payment_status, student_no, org_name, academic_year, semester)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """
-                    fee_rows_affected = execute_query(insert_fee_query, (receipt_no, membership_fee_amount, payment_deadline.strftime('%Y-%m-%d'), payment_status, student_no, current_org_name, academic_year, semester))
+                    fee_rows_affected = execute_query(
+                        insert_fee_query, 
+                        (receipt_no, membership_fee_amount, payment_deadline.strftime('%Y-%m-%d'), payment_status, student_no, current_org_name, academic_year, semester)
+                    )
                     
                     if fee_rows_affected > 0:
-                        messagebox.showinfo("Success", f"New membership for AY {academic_year} {semester} added and fee automatically added!")
+                        messagebox.showinfo("Success", "New semester membership added and membership fee automatically added!")
                     else:
-                        messagebox.showwarning("Warning", f"New membership for AY {academic_year} {semester} added, but failed to automatically add membership fee. Please add it manually.")
+                        messagebox.showwarning("Warning", "New semester membership added, but failed to automatically add membership fee. Please add it manually.")
                 else:
-                    messagebox.showwarning("Warning", f"New membership for AY {academic_year} {semester} added, but a membership fee for this period already exists. Skipping fee creation.")
+                    messagebox.showwarning("Warning", "New semester membership added, but a membership fee for this period already exists. Skipping fee creation.")
                 
                 if new_status == 'Active':
                     execute_query("UPDATE organization SET no_of_members = no_of_members + 1 WHERE org_id = %s", (self.app.current_user_id,))
-                
-                self.load_member_info() # Reload to show updated history
-                self.is_adding_new = False
-                self.batch_membership_entry.config(state='normal') 
-                self.batch_membership_entry.delete(0, tk.END)
-            else:
-                messagebox.showerror("Error", "Failed to add new membership.")
-        else:
-            old_membership_status = fetch_one(
-                "SELECT status FROM serves WHERE org_name = %s AND student_no = %s AND academic_year = %s AND semester = %s",
-                (current_org_name, student_no, academic_year, semester)
-            )
-            old_status = old_membership_status['status'] if old_membership_status else None
 
-            update_query = """
+                self.load_member_info()
+            else:
+                messagebox.showerror("Error", "Failed to add new semester membership.")
+        else:
+            update_serves_query = """
             UPDATE serves SET role = %s, status = %s, committee = %s
-            WHERE org_name = %s AND student_no = %s AND academic_year = %s AND semester = %s
+            WHERE student_no = %s AND org_name = %s AND academic_year = %s AND semester = %s
             """
-            rows_affected = execute_query(update_query, (new_role, new_status, new_committee,
-                                                          current_org_name, student_no, academic_year, semester))
+            rows_affected = execute_query(update_serves_query, (new_role, new_status, new_committee, student_no, current_org_name, academic_year, semester))
 
             if rows_affected > 0:
-                if old_status != new_status:
-                    if new_status == 'Active' and old_status != 'Active':
-                        execute_query("UPDATE organization SET no_of_members = no_of_members + 1 WHERE org_id = %s", (self.app.current_user_id,))
-                    elif new_status != 'Active' and old_status == 'Active':
-                        execute_query("UPDATE organization SET no_of_members = no_of_members - 1 WHERE org_id = %s", (self.app.current_user_id,))
-
-                messagebox.showinfo("Success", f"Membership for AY {academic_year} {semester} updated successfully!")
-                self.load_member_info() # Reload to show updated history
-                self.batch_membership_entry.config(state='normal') 
-                self.batch_membership_entry.delete(0, tk.END) 
+                messagebox.showinfo("Success", "Membership status updated successfully!")
+                self.load_member_info()
             else:
-                messagebox.showerror("Error", "No changes made or failed to update membership.")
+                messagebox.showerror("Error", "Failed to update membership status.")
 
-
-    def show_update_section(self, heading_text):
-        self.update_section_frame.grid_slaves(row=0, column=0)[0].config(text=heading_text)
+    def show_update_section(self, title):
+        self.update_section_title.config(text=title)
         self.update_section_frame.grid()
 
     def hide_update_section(self):
-        self.update_section_frame.grid_forget()
+        self.update_section_frame.grid_remove()

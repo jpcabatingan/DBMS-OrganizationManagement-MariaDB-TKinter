@@ -9,12 +9,15 @@ from shared_variables import (
     connect_db, disconnect_db, execute_query, fetch_one, fetch_all, BasePage
 )
 
+# import orgpov classes
 from orgpov import OrganizationMenuPage
 from orgpov_modifymembers import AddNewMemberPage, EditMembershipStatusPage
+from orgpov_alumni import OrganizationAlumniPage
 # from orgpov_fees import OrganizationFeesPage # Uncomment when ready
 
 # import member pov classes
 from memberpov import MemberMenuPage, ViewPersonalInfoPage, EditPersonalInfoPage, ViewRegisteredOrgsPage, ViewMembersUnpaidFeesPage
+
 
 class AuthPage(ttk.Frame):
     def __init__(self, master, app_instance):
@@ -288,10 +291,12 @@ class App(tk.Tk):
         else:
             messagebox.showerror("Navigation Error", f"Page class '{page_class_name}' not found.")
 
+    # authentication page
     def show_auth_page(self):
         self.pages['AuthPage'] = AuthPage
         self.show_page('AuthPage')
 
+    # member pov pages
     def show_member_menu(self):
         self.pages['MemberMenuPage'] = MemberMenuPage
         self.show_page('MemberMenuPage')
@@ -312,6 +317,7 @@ class App(tk.Tk):
         self.pages['ViewMembersUnpaidFeesPage'] = ViewMembersUnpaidFeesPage
         self.show_page('ViewMembersUnpaidFeesPage')
 
+    # organization pov pages
     def show_organization_menu(self):
         self.pages['OrganizationMenuPage'] = OrganizationMenuPage
         self.show_page('OrganizationMenuPage', self.current_org_name)
@@ -323,10 +329,16 @@ class App(tk.Tk):
     def show_edit_membership_status_page(self):
         self.pages['EditMembershipStatusPage'] = EditMembershipStatusPage
         self.show_page('EditMembershipStatusPage')
+    
+    def show_alumni_page(self):
+        self.pages['OrganizationAlumniPage'] = OrganizationAlumniPage
+        self.show_page('OrganizationAlumniPage', "Alumni Members Report", self.current_org_name)
 
     def show_org_fees_page(self):
         messagebox.showinfo("Coming Soon", "Organization Fees page is not yet implemented.")
 
+    
+    # authentication logout
     def logout(self):
         self.current_user_type = None
         self.current_user_id = None
