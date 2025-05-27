@@ -1,10 +1,13 @@
 import mysql.connector
 from mysql.connector import errorcode
 from tkinter import *
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, Toplevel
 from tkinter.font import BOLD
 import datetime
-from passlib.hash import pbkdf2_sha256 # For password hashing
+from passlib.hash import pbkdf2_sha256 
+import tkinter as tk
+from tkinter import ttk, messagebox, Toplevel
+from tkinter.font import BOLD
 
 # --- Database Configuration ---
 DB_CONFIG = {
@@ -57,46 +60,174 @@ def disconnect_db():
         # messagebox.showinfo("Connection Status", "No active database connection to close.")
 
 
-# --- Authentication Functions (simplified for this example, focusing on GUI) ---
+# --- AuthPage Class ---
+# --- AuthPage Class ---
 class AuthPage(ttk.Frame):
     def __init__(self, master, app_instance):
-        super().__init__(master, padding="20")
+        super().__init__(master, padding="0")
         self.app = app_instance
-        self.grid(row=0, column=0, sticky=(N, W, E, S))
+        self.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E, tk.S))
         master.grid_rowconfigure(0, weight=1)
         master.grid_columnconfigure(0, weight=1)
 
         self.create_widgets()
 
     def create_widgets(self):
-        ttk.Label(self, text="Authentication", font=(None, 16, BOLD)).grid(row=0, column=0, columnspan=2, pady=10)
+        # Configure grid for the main AuthPage frame to have two columns
+        self.grid_columnconfigure(0, weight=1) # Member panel column
+        self.grid_columnconfigure(1, weight=1) # Organization panel column
+        self.grid_rowconfigure(0, weight=1) # Single row
 
-        # Member Login/Signup
-        ttk.Label(self, text="--- Member ---", font=(None, 12)).grid(row=1, column=0, columnspan=2, pady=5)
-        ttk.Label(self, text="Student No:").grid(row=2, column=0, sticky=W, pady=2)
-        self.member_student_no_entry = ttk.Entry(self)
-        self.member_student_no_entry.grid(row=2, column=1, sticky=(W, E), pady=2)
-        ttk.Button(self, text="Member Login", command=self.member_login).grid(row=3, column=0, sticky=W, pady=5)
-        ttk.Button(self, text="Member Sign Up", command=self.member_signup_prompt).grid(row=3, column=1, sticky=E, pady=5)
+        # --- Member Panel (Left Side) ---
+        member_panel = ttk.Frame(self, style='AuthPanel.TFrame', padding="30")
+        member_panel.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E, tk.S), padx=0, pady=0)
+        # We need 3 columns for the signup section to avoid overlap:
+        # Col 0: Left Half of Fields (e.g., Student No, First Name)
+        # Col 1: Right Half of Fields (e.g., Degree Program, Gender)
+        # Col 2: The Signup Button
+        member_panel.grid_columnconfigure(0, weight=1)
+        member_panel.grid_columnconfigure(1, weight=1)
+        member_panel.grid_columnconfigure(2, weight=0) # This column will hold the signup button
 
-        # Organization Login/Signup
-        ttk.Label(self, text="--- Organization ---", font=(None, 12)).grid(row=4, column=0, columnspan=2, pady=5)
-        ttk.Label(self, text="Org ID:").grid(row=5, column=0, sticky=W, pady=2)
-        self.org_id_entry = ttk.Entry(self)
-        self.org_id_entry.grid(row=5, column=1, sticky=(W, E), pady=2)
-        # Removed org_name_entry for login, keeping it for signup dialog only
-        # ttk.Label(self, text="Org Name:").grid(row=6, column=0, sticky=W, pady=2)
-        # self.org_name_entry = ttk.Entry(self)
-        # self.org_name_entry.grid(row=6, column=1, sticky=(W, E), pady=2) # Used for signup, and for login to differentiate
-        ttk.Button(self, text="Organization Login", command=self.org_login).grid(row=7, column=0, sticky=W, pady=5) # Adjusted row
-        ttk.Button(self, text="Organization Sign Up", command=self.org_signup_prompt).grid(row=7, column=1, sticky=E, pady=5) # Adjusted row
+        # Member Login Section
+        ttk.Label(member_panel, text="Member", font=("Arial", 24, BOLD), foreground='black').grid(row=0, column=0, columnspan=3, sticky=tk.W, pady=(0, 5)) # Adjusted columnspan
+        ttk.Label(member_panel, text="Enter your credentials below or sign up for a new account.", font=("Arial", 10), foreground='grey').grid(row=1, column=0, columnspan=3, sticky=tk.W, pady=(0, 20)) # Adjusted columnspan
 
-        for child in self.winfo_children():
-            child.grid_configure(padx=5, pady=5)
+        ttk.Label(member_panel, text="Student no.", font=("Arial", 10, BOLD)).grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=(10, 0)) # Adjusted columnspan
+        self.member_student_no_entry = ttk.Entry(member_panel, font=("Arial", 12))
+        self.member_student_no_entry.grid(row=3, column=0, columnspan=1, sticky=(tk.W, tk.E), pady=(0, 5)) # Spans 2 columns
+        ttk.Label(member_panel, text="Format: 20XX-XXXXX", font=("Arial", 8), foreground='grey').grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=(0, 20)) # Spans 2 columns
 
-        self.grid_columnconfigure(1, weight=1)
+        # Login button should now be in column 2, aligning with the image
+        ttk.Button(member_panel, text="Log-in", style='Login.TButton', command=self.member_login).grid(row=3, column=1, sticky=tk.E, padx=(5,0))
 
 
+        # --- Separator Line for Member Section ---
+        # Adjusted columnspan to span all 3 columns of member_panel
+        ttk.Frame(member_panel, height=2, relief='sunken', style='Separator.TFrame').grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(20, 20))
+
+
+        # Member Sign-up Section (adjusted row numbers due to separator)
+        # Student no. field
+        ttk.Label(member_panel, text="Student no.", font=("Arial", 10, BOLD)).grid(row=6, column=0, sticky=tk.W, pady=(10, 0))
+        self.signup_student_no_entry = ttk.Entry(member_panel, font=("Arial", 12))
+        self.signup_student_no_entry.grid(row=7, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
+        ttk.Label(member_panel, text="Format: 20XX-XXXXX", font=("Arial", 8), foreground='grey').grid(row=8, column=0, sticky=tk.W, pady=(0, 10))
+
+        # Degree Program field
+        ttk.Label(member_panel, text="Degree Program", font=("Arial", 10, BOLD)).grid(row=6, column=1, sticky=tk.W, pady=(10, 0))
+        self.signup_degree_program_entry = ttk.Entry(member_panel, font=("Arial", 12))
+        self.signup_degree_program_entry.grid(row=7, column=1, sticky=(tk.W, tk.E), pady=(0, 5))
+        ttk.Label(member_panel, text="Format: BS Computer Science", font=("Arial", 8), foreground='grey').grid(row=8, column=1, sticky=tk.W, pady=(0, 10))
+
+        # First Name field
+        ttk.Label(member_panel, text="First Name", font=("Arial", 10, BOLD)).grid(row=9, column=0, sticky=tk.W, pady=(10, 0))
+        self.signup_first_name_entry = ttk.Entry(member_panel, font=("Arial", 12))
+        self.signup_first_name_entry.grid(row=10, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
+
+        # Gender field
+        ttk.Label(member_panel, text="Gender", font=("Arial", 10, BOLD)).grid(row=9, column=1, sticky=tk.W, pady=(10, 0))
+        self.signup_gender_entry = ttk.Entry(member_panel, font=("Arial", 12))
+        self.signup_gender_entry.grid(row=10, column=1, sticky=(tk.W, tk.E), pady=(0, 5))
+        ttk.Label(member_panel, text="Format: F / M", font=("Arial", 8), foreground='grey').grid(row=11, column=1, sticky=tk.W, pady=(0, 10))
+
+        # Middle Name field
+        ttk.Label(member_panel, text="Middle Name", font=("Arial", 10, BOLD)).grid(row=12, column=0, sticky=tk.W, pady=(10, 0))
+        self.signup_middle_name_entry = ttk.Entry(member_panel, font=("Arial", 12))
+        self.signup_middle_name_entry.grid(row=13, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
+        ttk.Label(member_panel, text="Optional", font=("Arial", 8), foreground='grey').grid(row=14, column=0, sticky=tk.W, pady=(0, 10))
+
+        # Batch field
+        ttk.Label(member_panel, text="Batch", font=("Arial", 10, BOLD)).grid(row=12, column=1, sticky=tk.W, pady=(10, 0))
+        self.signup_batch_entry = ttk.Entry(member_panel, font=("Arial", 12))
+        self.signup_batch_entry.grid(row=13, column=1, sticky=(tk.W, tk.E), pady=(0, 5))
+        ttk.Label(member_panel, text="Format: 20XX", font=("Arial", 8), foreground='grey').grid(row=14, column=1, sticky=tk.W, pady=(0, 10))
+
+        # Last Name field and Sign-up button - THIS IS THE CRUCIAL CHANGE
+        ttk.Label(member_panel, text="Last Name", font=("Arial", 10, BOLD)).grid(row=15, column=0, sticky=tk.W, pady=(10, 0))
+        self.signup_last_name_entry = ttk.Entry(member_panel, font=("Arial", 12))
+        self.signup_last_name_entry.grid(row=16, column=0, columnspan=1, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5)) # Span columns 0 and 1
+        ttk.Button(member_panel, text="Sign-up", style='Login.TButton', command=self.member_signup).grid(row=16, column=1, sticky=tk.E, padx=(5,0)) # Button in column 2
+
+        # --- Organization Panel (Right Side) ---
+        org_panel = ttk.Frame(self, style='AuthPanel.TFrame', padding="30")
+        org_panel.grid(row=0, column=1, sticky=(tk.N, tk.W, tk.E, tk.S), padx=0, pady=0)
+        # We need 2 columns for the signup section to avoid overlap for org signup:
+        # Col 0: Entry field
+        # Col 1: Button
+        org_panel.grid_columnconfigure(0, weight=1)
+        org_panel.grid_columnconfigure(1, weight=0) # This column will hold the signup button
+
+        # Organization Login Section
+        ttk.Label(org_panel, text="Organization", font=("Arial", 24, BOLD), foreground='black').grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 5))
+        ttk.Label(org_panel, text="Enter your org ID below or register a new org.", font=("Arial", 10), foreground='grey').grid(row=1, column=0, columnspan=2, sticky=tk.W, pady=(0, 20))
+
+        ttk.Label(org_panel, text="Organization ID", font=("Arial", 10, BOLD)).grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
+        self.org_id_entry = ttk.Entry(org_panel, font=("Arial", 12))
+        self.org_id_entry.grid(row=3, column=0, sticky=(tk.W, tk.E), pady=(0, 5))
+        ttk.Button(org_panel, text="Log-in", style='Login.TButton', command=self.org_login).grid(row=3, column=1, sticky=tk.E, padx=(5,0))
+
+
+        # --- Separator Line for Organization Section ---
+        ttk.Frame(org_panel, height=2, relief='sunken', style='Separator.TFrame').grid(row=5, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(20, 20))
+
+
+        # Organization Sign-up Section (adjusted row numbers due to separator)
+        ttk.Label(org_panel, text="Organization ID", font=("Arial", 10, BOLD)).grid(row=6, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
+        self.signup_org_id_entry = ttk.Entry(org_panel, font=("Arial", 12))
+        self.signup_org_id_entry.grid(row=7, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
+        ttk.Label(org_panel, text="Format: XXXXX", font=("Arial", 8), foreground='grey').grid(row=8, column=0, columnspan=2, sticky=tk.W, pady=(0, 20))
+
+        ttk.Label(org_panel, text="Organization Name", font=("Arial", 10, BOLD)).grid(row=9, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
+        self.signup_org_name_entry = ttk.Entry(org_panel, font=("Arial", 12))
+        self.signup_org_name_entry.grid(row=10, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5)) # Span 1 column
+        ttk.Button(org_panel, text="Sign-up", style='Login.TButton', command=self.org_signup).grid(row=10, column=1, sticky=tk.E, padx=(5,0)) 
+
+        # Configure org_panel columns weights after all widgets are placed
+        org_panel.grid_columnconfigure(0, weight=1)
+        org_panel.grid_columnconfigure(1, weight=0)
+
+
+        # --- Styling ---
+        style = ttk.Style(self)
+        style.theme_use('clam')
+
+        # Define custom colors
+        LIGHT_GREY = "#E0E0E0"
+        DARK_GREY = "#616161"
+        PURPLE = "#673AB7"
+
+        self.master.configure(bg=LIGHT_GREY)
+
+        style.configure('TFrame', background=LIGHT_GREY)
+        style.configure('AuthPanel.TFrame', background='white', borderwidth=0, relief='flat')
+
+        # New style for the separator line
+        style.configure('Separator.TFrame', background=DARK_GREY)
+
+
+        style.configure('TLabel', background='white', foreground='black')
+        style.configure('Login.TButton',
+                        background=PURPLE,
+                        foreground='white',
+                        font=("Arial", 10, BOLD),
+                        borderwidth=0,
+                        focuscolor=PURPLE,
+                        relief="flat")
+        style.map('Login.TButton',
+                  background=[('active', '#5E35B1'), ('pressed', '#4527A0')],
+                  foreground=[('active', 'white'), ('pressed', 'white')])
+
+        style.configure('TEntry',
+                        fieldbackground=LIGHT_GREY,
+                        foreground='black',
+                        borderwidth=0,
+                        padding=5)
+        style.map('TEntry',
+                  fieldbackground=[('focus', '#BBDEFB')])
+
+
+    # --- Member Logic (No changes needed, already uses internal fields) ---
     def member_login(self):
         global CURRENT_USER_TYPE, CURRENT_USER_ID
         student_no = self.member_student_no_entry.get().strip()
@@ -104,7 +235,6 @@ class AuthPage(ttk.Frame):
             messagebox.showerror("Login Error", "Please enter a Student Number.")
             return
 
-        # No need to call connect_db here, it's already connected at app start
         try:
             cursor.execute("SELECT student_no, first_name FROM member WHERE student_no = %s", (student_no,))
             member_info = cursor.fetchone()
@@ -117,132 +247,95 @@ class AuthPage(ttk.Frame):
                 messagebox.showerror("Login Failed", "Invalid Student Number. Please try again.")
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to login: {err}")
-        # No finally block to disconnect_db, connection is persistent
 
-    def member_signup_prompt(self):
-        signup_window = Toplevel(self.master)
-        signup_window.title("Member Sign Up")
-        signup_window.geometry("400x300")
+    def member_signup(self):
+        student_no = self.signup_student_no_entry.get().strip()
+        first_name = self.signup_first_name_entry.get().strip()
+        middle_name = self.signup_middle_name_entry.get().strip()
+        last_name = self.signup_last_name_entry.get().strip()
+        degree_program = self.signup_degree_program_entry.get().strip()
+        gender = self.signup_gender_entry.get().strip()
+        batch = self.signup_batch_entry.get().strip()
 
-        labels = ["Student No:", "First Name:", "Middle Name:", "Last Name:", "Degree Program:", "Gender:", "Batch:"]
-        entries = {}
+        if not all([student_no, first_name, last_name, degree_program, gender, batch]):
+            messagebox.showerror("Input Error", "Please fill in all required fields (Student No, First Name, Last Name, Degree Program, Gender, Batch).")
+            return
 
-        for i, text in enumerate(labels):
-            ttk.Label(signup_window, text=text).grid(row=i, column=0, sticky=W, padx=5, pady=2)
-            entry = ttk.Entry(signup_window)
-            entry.grid(row=i, column=1, sticky=(W, E), padx=5, pady=2)
-            entries[text.replace(":", "").replace(" ", "_").lower()] = entry
-
-        def perform_signup():
-            student_no = entries['student_no'].get().strip()
-            first_name = entries['first_name'].get().strip()
-            middle_name = entries['middle_name'].get().strip()
-            last_name = entries['last_name'].get().strip()
-            degree_program = entries['degree_program'].get().strip()
-            gender = entries['gender'].get().strip()
-            batch = entries['batch'].get().strip()
-
-            if not all([student_no, first_name, last_name, degree_program, gender, batch]):
-                messagebox.showerror("Input Error", "Please fill in all required fields (Student No, First Name, Last Name, Degree Program, Gender, Batch).")
+        try:
+            cursor.execute("SELECT student_no FROM member WHERE student_no = %s", (student_no,))
+            if cursor.fetchone():
+                messagebox.showerror("Signup Error", "Student Number already exists.")
                 return
 
-            # No need to call connect_db here, it's already connected at app start
-            try:
-                # Check if student_no already exists
-                cursor.execute("SELECT student_no FROM member WHERE student_no = %s", (student_no,))
-                if cursor.fetchone():
-                    messagebox.showerror("Signup Error", "Student Number already exists.")
-                    return
+            insert_query = """
+            INSERT INTO member (student_no, first_name, middle_name, last_name, degree_program, gender, batch)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(insert_query, (student_no, first_name, middle_name if middle_name else None, last_name, degree_program, gender, int(batch)))
+            cnx.commit()
+            messagebox.showinfo("Sign Up Success", "Member registered successfully!")
+            self.signup_student_no_entry.delete(0, tk.END)
+            self.signup_first_name_entry.delete(0, tk.END)
+            self.signup_middle_name_entry.delete(0, tk.END)
+            self.signup_last_name_entry.delete(0, tk.END)
+            self.signup_degree_program_entry.delete(0, tk.END)
+            self.signup_gender_entry.delete(0, tk.END)
+            self.signup_batch_entry.delete(0, tk.END)
 
-                insert_query = """
-                INSERT INTO member (student_no, first_name, middle_name, last_name, degree_program, gender, batch)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """
-                cursor.execute(insert_query, (student_no, first_name, middle_name if middle_name else None, last_name, degree_program, gender, int(batch)))
-                cnx.commit()
-                messagebox.showinfo("Sign Up Success", "Member registered successfully!")
-                signup_window.destroy()
-            except ValueError:
-                messagebox.showerror("Input Error", "Batch must be an integer.")
-            except mysql.connector.Error as err:
-                messagebox.showerror("Database Error", f"Failed to sign up: {err}")
-            # No finally block to disconnect_db, connection is persistent
+        except ValueError:
+            messagebox.showerror("Input Error", "Batch must be an integer.")
+        except mysql.connector.Error as err:
+            messagebox.showerror("Database Error", f"Failed to sign up: {err}")
 
-        ttk.Button(signup_window, text="Sign Up", command=perform_signup).grid(row=len(labels), column=0, columnspan=2, pady=10)
-
-
+    # --- Organization Logic (No changes needed, already uses internal fields) ---
     def org_login(self):
         global CURRENT_USER_TYPE, CURRENT_USER_ID, CURRENT_ORG_NAME
         org_id = self.org_id_entry.get().strip()
-        # Removed org_name from login check as requested
-        # org_name = self.org_name_entry.get().strip()
 
-        if not org_id: # Only check org_id
+        if not org_id:
             messagebox.showerror("Login Error", "Please enter Org ID.")
             return
 
-        # No need to call connect_db here, it's already connected at app start
         try:
-            # Query only by org_id
             cursor.execute("SELECT org_id, org_name FROM organization WHERE org_id = %s", (org_id,))
             org_info = cursor.fetchone()
             if org_info:
                 CURRENT_USER_TYPE = 'organization'
                 CURRENT_USER_ID = org_id
-                CURRENT_ORG_NAME = org_info[1] # Store the organization name from the database
+                CURRENT_ORG_NAME = org_info[1]
                 messagebox.showinfo("Login Success", f"Welcome, {CURRENT_ORG_NAME} (Organization)!")
                 self.app.show_organization_menu()
             else:
                 messagebox.showerror("Login Failed", "Invalid Org ID. Please try again.")
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to login: {err}")
-        # No finally block to disconnect_db, connection is persistent
 
-    def org_signup_prompt(self):
-        signup_window = Toplevel(self.master)
-        signup_window.title("Organization Sign Up")
-        signup_window.geometry("300x150")
+    def org_signup(self):
+        org_id = self.signup_org_id_entry.get().strip()
+        org_name = self.signup_org_name_entry.get().strip()
 
-        labels = ["Org ID:", "Org Name:"]
-        entries = {}
+        if not all([org_id, org_name]):
+            messagebox.showerror("Input Error", "Please fill in all fields.")
+            return
 
-        for i, text in enumerate(labels):
-            ttk.Label(signup_window, text=text).grid(row=i, column=0, sticky=W, padx=5, pady=2)
-            entry = ttk.Entry(signup_window)
-            entry.grid(row=i, column=1, sticky=(W, E), padx=5, pady=2)
-            entries[text.replace(":", "").replace(" ", "_").lower()] = entry
-
-        def perform_signup():
-            org_id = entries['org_id'].get().strip()
-            org_name = entries['org_name'].get().strip()
-
-            if not all([org_id, org_name]):
-                messagebox.showerror("Input Error", "Please fill in all fields.")
+        try:
+            cursor.execute("SELECT org_id FROM organization WHERE org_id = %s OR org_name = %s", (org_id, org_name))
+            if cursor.fetchone():
+                messagebox.showerror("Signup Error", "Organization ID or Name already exists.")
                 return
 
-            # No need to call connect_db here, it's already connected at app start
-            try:
-                # Check if org_id or org_name already exists
-                cursor.execute("SELECT org_id FROM organization WHERE org_id = %s OR org_name = %s", (org_id, org_name))
-                if cursor.fetchone():
-                    messagebox.showerror("Signup Error", "Organization ID or Name already exists.")
-                    return
+            insert_query = """
+            INSERT INTO organization (org_id, org_name, no_of_members)
+            VALUES (%s, %s, 0)
+            """
+            cursor.execute(insert_query, (org_id, org_name))
+            cnx.commit()
+            messagebox.showinfo("Sign Up Success", "Organization registered successfully!")
+            self.signup_org_id_entry.delete(0, tk.END)
+            self.signup_org_name_entry.delete(0, tk.END)
 
-                insert_query = """
-                INSERT INTO organization (org_id, org_name, no_of_members)
-                VALUES (%s, %s, 0)
-                """
-                cursor.execute(insert_query, (org_id, org_name))
-                cnx.commit()
-                messagebox.showinfo("Sign Up Success", "Organization registered successfully!")
-                signup_window.destroy()
-            except mysql.connector.Error as err:
-                messagebox.showerror("Database Error", f"Failed to sign up: {err}")
-            # No finally block to disconnect_db, connection is persistent
-
-        # ADDED: Sign Up button for Organization Sign Up dialog
-        ttk.Button(signup_window, text="Sign Up", command=perform_signup).grid(row=len(labels), column=0, columnspan=2, pady=10)
-
+        except mysql.connector.Error as err:
+            messagebox.showerror("Database Error", f"Failed to sign up: {err}")
 
 # --- Base Page Class ---
 class BasePage(ttk.Frame):
@@ -1568,7 +1661,7 @@ class App(Tk):
     def __init__(self):
         super().__init__()
         self.title("Organization Management System")
-        self.geometry("800x600")
+        self.geometry("1200x800")
 
         self.current_page = None
         self.pages = {}
