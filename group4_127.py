@@ -1,11 +1,11 @@
-import mysql.connector
-from mysql.connector import errorcode
-from tkinter import *
-from tkinter import ttk, messagebox, Toplevel
-from tkinter.font import BOLD
 import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel
 from tkinter.font import BOLD
+
+import mysql.connector
+from mysql.connector import errorcode
+
+import datetime
 
 # --- Database Configuration ---
 DB_CONFIG = {
@@ -25,17 +25,15 @@ CURRENT_USER_ID = None   # student_no for member, org_id for organization
 CURRENT_ORG_NAME = None # To store the organization name after organization login
 
 # --- Database Connection Functions ---
-# Modified connect_db: No longer shows "Already connected" message
 def connect_db():
     global cnx, cursor
     if cnx and cnx.is_connected():
-        return True # Already connected
+        return True
 
     try:
         cnx = mysql.connector.connect(**DB_CONFIG)
-        cursor = cnx.cursor(buffered=True) # Use buffered cursor for multiple queries
+        cursor = cnx.cursor(buffered=True)
         print("Successfully connected to the database!")
-        # messagebox.showinfo("Connection Success", "Successfully connected to the database!") # Removed for silent connect
         return True
     except mysql.connector.Error as err:
         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
@@ -46,20 +44,15 @@ def connect_db():
             messagebox.showerror("Database Error", str(err))
         return False
 
-# Modified disconnect_db: No longer shows "No active connection" message
 def disconnect_db():
     global cnx, cursor
     if cnx and cnx.is_connected():
         cursor.close()
         cnx.close()
-        # messagebox.showinfo("Connection Status", "Disconnected from the database.") # Removed for silent disconnect
         print("Disconnected from the database.")
-    # else: # Removed for silent disconnect
-        # messagebox.showinfo("Connection Status", "No active database connection to close.")
 
 
-# --- AuthPage Class ---
-# --- AuthPage Class ---
+# --- AuthPage Class (No changes from previous update, included for context) ---
 class AuthPage(ttk.Frame):
     def __init__(self, master, app_instance):
         super().__init__(master, padding="0")
@@ -71,126 +64,99 @@ class AuthPage(ttk.Frame):
         self.create_widgets()
 
     def create_widgets(self):
-        # Configure grid for the main AuthPage frame to have two columns
-        self.grid_columnconfigure(0, weight=1) # Member panel column
-        self.grid_columnconfigure(1, weight=1) # Organization panel column
-        self.grid_rowconfigure(0, weight=1) # Single row
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
 
         # --- Member Panel (Left Side) ---
         member_panel = ttk.Frame(self, style='AuthPanel.TFrame', padding="30")
         member_panel.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E, tk.S), padx=0, pady=0)
-        # We need 3 columns for the signup section to avoid overlap:
-        # Col 0: Left Half of Fields (e.g., Student No, First Name)
-        # Col 1: Right Half of Fields (e.g., Degree Program, Gender)
-        # Col 2: The Signup Button
         member_panel.grid_columnconfigure(0, weight=1)
         member_panel.grid_columnconfigure(1, weight=1)
-        member_panel.grid_columnconfigure(2, weight=0) # This column will hold the signup button
+        member_panel.grid_columnconfigure(2, weight=0)
 
-        # Member Login Section
-        ttk.Label(member_panel, text="Member", font=("Arial", 24, BOLD), foreground='black').grid(row=0, column=0, columnspan=3, sticky=tk.W, pady=(0, 5)) # Adjusted columnspan
-        ttk.Label(member_panel, text="Enter your credentials below or sign up for a new account.", font=("Arial", 10), foreground='grey').grid(row=1, column=0, columnspan=3, sticky=tk.W, pady=(0, 20)) # Adjusted columnspan
+        ttk.Label(member_panel, text="Member", font=("Arial", 24, BOLD), foreground='black').grid(row=0, column=0, columnspan=3, sticky=tk.W, pady=(0, 5))
+        ttk.Label(member_panel, text="Enter your credentials below or sign up for a new account.", font=("Arial", 10), foreground='grey').grid(row=1, column=0, columnspan=3, sticky=tk.W, pady=(0, 20))
 
-        ttk.Label(member_panel, text="Student no.", font=("Arial", 10, BOLD)).grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=(10, 0)) # Adjusted columnspan
+        ttk.Label(member_panel, text="Student no.", font=("Arial", 10, BOLD)).grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
         self.member_student_no_entry = ttk.Entry(member_panel, font=("Arial", 12))
-        self.member_student_no_entry.grid(row=3, column=0, columnspan=1, sticky=(tk.W, tk.E), pady=(0, 5)) # Spans 2 columns
-        ttk.Label(member_panel, text="Format: 20XX-XXXXX", font=("Arial", 8), foreground='grey').grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=(0, 20)) # Spans 2 columns
+        self.member_student_no_entry.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 5))
+        ttk.Label(member_panel, text="Format: 20XX-XXXXX", font=("Arial", 8), foreground='grey').grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=(0, 20))
 
-        # Login button should now be in column 2, aligning with the image
-        ttk.Button(member_panel, text="Log-in", style='Login.TButton', command=self.member_login).grid(row=3, column=1, sticky=tk.E, padx=(5,0))
+        ttk.Button(member_panel, text="Log-in", style='Login.TButton', command=self.member_login).grid(row=3, column=2, sticky=tk.E, padx=(5,0))
 
-
-        # --- Separator Line for Member Section ---
-        # Adjusted columnspan to span all 3 columns of member_panel
         ttk.Frame(member_panel, height=2, relief='sunken', style='Separator.TFrame').grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(20, 20))
 
-
-        # Member Sign-up Section (adjusted row numbers due to separator)
-        # Student no. field
         ttk.Label(member_panel, text="Student no.", font=("Arial", 10, BOLD)).grid(row=6, column=0, sticky=tk.W, pady=(10, 0))
         self.signup_student_no_entry = ttk.Entry(member_panel, font=("Arial", 12))
         self.signup_student_no_entry.grid(row=7, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
         ttk.Label(member_panel, text="Format: 20XX-XXXXX", font=("Arial", 8), foreground='grey').grid(row=8, column=0, sticky=tk.W, pady=(0, 10))
 
-        # Degree Program field
         ttk.Label(member_panel, text="Degree Program", font=("Arial", 10, BOLD)).grid(row=6, column=1, sticky=tk.W, pady=(10, 0))
         self.signup_degree_program_entry = ttk.Entry(member_panel, font=("Arial", 12))
         self.signup_degree_program_entry.grid(row=7, column=1, sticky=(tk.W, tk.E), pady=(0, 5))
         ttk.Label(member_panel, text="Format: BS Computer Science", font=("Arial", 8), foreground='grey').grid(row=8, column=1, sticky=tk.W, pady=(0, 10))
 
-        # First Name field
         ttk.Label(member_panel, text="First Name", font=("Arial", 10, BOLD)).grid(row=9, column=0, sticky=tk.W, pady=(10, 0))
         self.signup_first_name_entry = ttk.Entry(member_panel, font=("Arial", 12))
         self.signup_first_name_entry.grid(row=10, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
 
-        # Gender field
         ttk.Label(member_panel, text="Gender", font=("Arial", 10, BOLD)).grid(row=9, column=1, sticky=tk.W, pady=(10, 0))
-        self.signup_gender_entry = ttk.Entry(member_panel, font=("Arial", 12))
-        self.signup_gender_entry.grid(row=10, column=1, sticky=(tk.W, tk.E), pady=(0, 5))
+        self.signup_gender_combobox = ttk.Combobox(member_panel, values=["F", "M"], state="readonly", font=("Arial", 12)) # Changed to Combobox
+        self.signup_gender_combobox.grid(row=10, column=1, sticky=(tk.W, tk.E), pady=(0, 5))
+        self.signup_gender_combobox.set("F") # Default value
         ttk.Label(member_panel, text="Format: F / M", font=("Arial", 8), foreground='grey').grid(row=11, column=1, sticky=tk.W, pady=(0, 10))
 
-        # Middle Name field
         ttk.Label(member_panel, text="Middle Name", font=("Arial", 10, BOLD)).grid(row=12, column=0, sticky=tk.W, pady=(10, 0))
         self.signup_middle_name_entry = ttk.Entry(member_panel, font=("Arial", 12))
         self.signup_middle_name_entry.grid(row=13, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
         ttk.Label(member_panel, text="Optional", font=("Arial", 8), foreground='grey').grid(row=14, column=0, sticky=tk.W, pady=(0, 10))
 
-        # Batch field
         ttk.Label(member_panel, text="Batch", font=("Arial", 10, BOLD)).grid(row=12, column=1, sticky=tk.W, pady=(10, 0))
         self.signup_batch_entry = ttk.Entry(member_panel, font=("Arial", 12))
         self.signup_batch_entry.grid(row=13, column=1, sticky=(tk.W, tk.E), pady=(0, 5))
         ttk.Label(member_panel, text="Format: 20XX", font=("Arial", 8), foreground='grey').grid(row=14, column=1, sticky=tk.W, pady=(0, 10))
 
-        # Last Name field and Sign-up button - THIS IS THE CRUCIAL CHANGE
         ttk.Label(member_panel, text="Last Name", font=("Arial", 10, BOLD)).grid(row=15, column=0, sticky=tk.W, pady=(10, 0))
         self.signup_last_name_entry = ttk.Entry(member_panel, font=("Arial", 12))
-        self.signup_last_name_entry.grid(row=16, column=0, columnspan=1, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5)) # Span columns 0 and 1
-        ttk.Button(member_panel, text="Sign-up", style='Login.TButton', command=self.member_signup).grid(row=16, column=1, sticky=tk.E, padx=(5,0)) # Button in column 2
+        self.signup_last_name_entry.grid(row=16, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
+        ttk.Button(member_panel, text="Sign-up", style='Login.TButton', command=self.member_signup).grid(row=16, column=2, sticky=tk.E, padx=(5,0))
 
         # --- Organization Panel (Right Side) ---
         org_panel = ttk.Frame(self, style='AuthPanel.TFrame', padding="30")
         org_panel.grid(row=0, column=1, sticky=(tk.N, tk.W, tk.E, tk.S), padx=0, pady=0)
-        # We need 2 columns for the signup section to avoid overlap for org signup:
-        # Col 0: Entry field
-        # Col 1: Button
         org_panel.grid_columnconfigure(0, weight=1)
-        org_panel.grid_columnconfigure(1, weight=0) # This column will hold the signup button
+        org_panel.grid_columnconfigure(1, weight=0)
 
-        # Organization Login Section
         ttk.Label(org_panel, text="Organization", font=("Arial", 24, BOLD), foreground='black').grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 5))
         ttk.Label(org_panel, text="Enter your org ID below or register a new org.", font=("Arial", 10), foreground='grey').grid(row=1, column=0, columnspan=2, sticky=tk.W, pady=(0, 20))
 
         ttk.Label(org_panel, text="Organization ID", font=("Arial", 10, BOLD)).grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
         self.org_id_entry = ttk.Entry(org_panel, font=("Arial", 12))
         self.org_id_entry.grid(row=3, column=0, sticky=(tk.W, tk.E), pady=(0, 5))
+        ttk.Label(org_panel, text="Format: XXXXX", font=("Arial", 8), foreground='grey').grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=(0, 20))
+
         ttk.Button(org_panel, text="Log-in", style='Login.TButton', command=self.org_login).grid(row=3, column=1, sticky=tk.E, padx=(5,0))
 
-
-        # --- Separator Line for Organization Section ---
         ttk.Frame(org_panel, height=2, relief='sunken', style='Separator.TFrame').grid(row=5, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(20, 20))
 
-
-        # Organization Sign-up Section (adjusted row numbers due to separator)
         ttk.Label(org_panel, text="Organization ID", font=("Arial", 10, BOLD)).grid(row=6, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
         self.signup_org_id_entry = ttk.Entry(org_panel, font=("Arial", 12))
         self.signup_org_id_entry.grid(row=7, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
-        ttk.Label(org_panel, text="Format: XXXX", font=("Arial", 8), foreground='grey').grid(row=8, column=0, columnspan=2, sticky=tk.W, pady=(0, 20))
+        ttk.Label(org_panel, text="Format: XXXXX", font=("Arial", 8), foreground='grey').grid(row=8, column=0, columnspan=2, sticky=tk.W, pady=(0, 20))
 
         ttk.Label(org_panel, text="Organization Name", font=("Arial", 10, BOLD)).grid(row=9, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
         self.signup_org_name_entry = ttk.Entry(org_panel, font=("Arial", 12))
-        self.signup_org_name_entry.grid(row=10, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5)) # Span 1 column
-        ttk.Button(org_panel, text="Sign-up", style='Login.TButton', command=self.org_signup).grid(row=10, column=1, sticky=tk.E, padx=(5,0)) 
+        self.signup_org_name_entry.grid(row=10, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
+        ttk.Button(org_panel, text="Sign-up", style='Login.TButton', command=self.org_signup).grid(row=10, column=1, sticky=tk.E, padx=(5,0))
 
-        # Configure org_panel columns weights after all widgets are placed
         org_panel.grid_columnconfigure(0, weight=1)
         org_panel.grid_columnconfigure(1, weight=0)
-
 
         # --- Styling ---
         style = ttk.Style(self)
         style.theme_use('clam')
 
-        # Define custom colors
         LIGHT_GREY = "#E0E0E0"
         DARK_GREY = "#616161"
         PURPLE = "#673AB7"
@@ -199,11 +165,7 @@ class AuthPage(ttk.Frame):
 
         style.configure('TFrame', background=LIGHT_GREY)
         style.configure('AuthPanel.TFrame', background='white', borderwidth=0, relief='flat')
-
-        # New style for the separator line
         style.configure('Separator.TFrame', background=DARK_GREY)
-
-
         style.configure('TLabel', background='white', foreground='black')
         style.configure('Login.TButton',
                         background=PURPLE,
@@ -225,7 +187,6 @@ class AuthPage(ttk.Frame):
                   fieldbackground=[('focus', '#BBDEFB')])
 
 
-    # --- Member Logic (No changes needed, already uses internal fields) ---
     def member_login(self):
         global CURRENT_USER_TYPE, CURRENT_USER_ID
         student_no = self.member_student_no_entry.get().strip()
@@ -252,7 +213,7 @@ class AuthPage(ttk.Frame):
         middle_name = self.signup_middle_name_entry.get().strip()
         last_name = self.signup_last_name_entry.get().strip()
         degree_program = self.signup_degree_program_entry.get().strip()
-        gender = self.signup_gender_entry.get().strip()
+        gender = self.signup_gender_combobox.get().strip() # Get value from combobox
         batch = self.signup_batch_entry.get().strip()
 
         if not all([student_no, first_name, last_name, degree_program, gender, batch]):
@@ -277,7 +238,7 @@ class AuthPage(ttk.Frame):
             self.signup_middle_name_entry.delete(0, tk.END)
             self.signup_last_name_entry.delete(0, tk.END)
             self.signup_degree_program_entry.delete(0, tk.END)
-            self.signup_gender_entry.delete(0, tk.END)
+            self.signup_gender_combobox.set("F") # Reset to default
             self.signup_batch_entry.delete(0, tk.END)
 
         except ValueError:
@@ -285,7 +246,6 @@ class AuthPage(ttk.Frame):
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to sign up: {err}")
 
-    # --- Organization Logic (No changes needed, already uses internal fields) ---
     def org_login(self):
         global CURRENT_USER_TYPE, CURRENT_USER_ID, CURRENT_ORG_NAME
         org_id = self.org_id_entry.get().strip()
@@ -335,13 +295,13 @@ class AuthPage(ttk.Frame):
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to sign up: {err}")
 
-# --- Base Page Class ---
+# --- Base Page Class (No changes from previous update, included for context) ---
 class BasePage(ttk.Frame):
     def __init__(self, master, app_instance, title):
         super().__init__(master, padding="20")
         self.app = app_instance
         self.title = title
-        self.grid(row=0, column=0, sticky=(N, W, E, S))
+        self.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E, tk.S)) # FIX: Added tk. prefix
         master.grid_rowconfigure(0, weight=1)
         master.grid_columnconfigure(0, weight=1)
         self.create_widgets()
@@ -349,7 +309,7 @@ class BasePage(ttk.Frame):
     def create_widgets(self):
         ttk.Label(self, text=self.title, font=(None, 16, BOLD)).grid(row=0, column=0, columnspan=2, pady=10)
         self.back_button = ttk.Button(self, text="Back to Menu", command=self.go_back)
-        self.back_button.grid(row=99, column=0, columnspan=2, pady=20) # A fixed position for back button
+        self.back_button.grid(row=99, column=0, columnspan=2, pady=20)
 
     def go_back(self):
         if CURRENT_USER_TYPE == 'member':
@@ -359,25 +319,25 @@ class BasePage(ttk.Frame):
         else:
             self.app.show_auth_page()
 
-# --- Member Pages ---
+# --- Member Pages (No changes from previous update, included for context) ---
 class MemberMenuPage(BasePage):
     def __init__(self, master, app_instance):
         super().__init__(master, app_instance, "Member Menu")
         self.create_member_menu_widgets()
 
     def create_member_menu_widgets(self):
-        self.back_button.grid_forget() # Hide default back button
+        self.back_button.grid_forget()
 
         row_idx = 1
-        ttk.Button(self, text="View Personal Info", command=self.app.show_view_personal_info_page).grid(row=row_idx, column=0, sticky=W, pady=5)
+        ttk.Button(self, text="View Personal Info", command=self.app.show_view_personal_info_page).grid(row=row_idx, column=0, sticky=tk.W, pady=5)
         row_idx += 1
-        ttk.Button(self, text="Edit Personal Info", command=self.app.show_edit_personal_info_page).grid(row=row_idx, column=0, sticky=W, pady=5)
+        ttk.Button(self, text="Edit Personal Info", command=self.app.show_edit_personal_info_page).grid(row=row_idx, column=0, sticky=tk.W, pady=5)
         row_idx += 1
-        ttk.Button(self, text="View Registered Organizations", command=self.app.show_view_registered_orgs_page).grid(row=row_idx, column=0, sticky=W, pady=5)
+        ttk.Button(self, text="View Registered Organizations", command=self.app.show_view_registered_orgs_page).grid(row=row_idx, column=0, sticky=tk.W, pady=5)
         row_idx += 1
-        ttk.Button(self, text="View Unpaid Fees (All Organizations)", command=self.app.show_view_members_unpaid_fees_page).grid(row=row_idx, column=0, sticky=W, pady=5)
+        ttk.Button(self, text="View Unpaid Fees (All Organizations)", command=self.app.show_view_members_unpaid_fees_page).grid(row=row_idx, column=0, sticky=tk.W, pady=5)
         row_idx += 1
-        ttk.Button(self, text="Logout", command=self.app.logout).grid(row=row_idx + 1, column=0, sticky=W, pady=20)
+        ttk.Button(self, text="Logout", command=self.app.logout).grid(row=row_idx + 1, column=0, sticky=tk.W, pady=20)
 
 class ViewPersonalInfoPage(BasePage):
     def __init__(self, master, app_instance):
@@ -386,10 +346,9 @@ class ViewPersonalInfoPage(BasePage):
 
     def display_info(self):
         for widget in self.winfo_children():
-            if widget not in [self.back_button, self.children['!label']]: # Keep title and back button
+            if widget not in [self.back_button, self.children['!label']]:
                 widget.destroy()
 
-        # No need to call connect_db here
         try:
             cursor.execute("SELECT student_no, first_name, middle_name, last_name, degree_program, gender, batch FROM member WHERE student_no = %s", (CURRENT_USER_ID,))
             member_info = cursor.fetchone()
@@ -397,13 +356,12 @@ class ViewPersonalInfoPage(BasePage):
             if member_info:
                 labels = ["Student No:", "First Name:", "Middle Name:", "Last Name:", "Degree Program:", "Gender:", "Batch:"]
                 for i, label_text in enumerate(labels):
-                    ttk.Label(self, text=label_text, font=(None, 10, BOLD)).grid(row=i + 1, column=0, sticky=W, padx=5, pady=2)
-                    ttk.Label(self, text=member_info[i]).grid(row=i + 1, column=1, sticky=W, padx=5, pady=2)
+                    ttk.Label(self, text=label_text, font=(None, 10, BOLD)).grid(row=i + 1, column=0, sticky=tk.W, padx=5, pady=2)
+                    ttk.Label(self, text=member_info[i]).grid(row=i + 1, column=1, sticky=tk.W, padx=5, pady=2)
             else:
                 ttk.Label(self, text="Member information not found.", foreground="red").grid(row=1, column=0, columnspan=2, pady=10)
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to retrieve personal info: {err}")
-        # No finally block to disconnect_db, connection is persistent
 
 class EditPersonalInfoPage(BasePage):
     def __init__(self, master, app_instance):
@@ -411,7 +369,6 @@ class EditPersonalInfoPage(BasePage):
         self.create_edit_form()
 
     def create_edit_form(self):
-        # No need to call connect_db here
         try:
             cursor.execute("SELECT student_no, first_name, middle_name, last_name, degree_program, gender, batch FROM member WHERE student_no = %s", (CURRENT_USER_ID,))
             member_info = cursor.fetchone()
@@ -422,31 +379,34 @@ class EditPersonalInfoPage(BasePage):
                 field_names = ["student_no", "first_name", "middle_name", "last_name", "degree_program", "gender", "batch"]
 
                 for i, label_text in enumerate(labels):
-                    ttk.Label(self, text=label_text).grid(row=i + 1, column=0, sticky=W, padx=5, pady=2)
-                    entry = ttk.Entry(self)
-                    entry.grid(row=i + 1, column=1, sticky=(W, E), padx=5, pady=2)
-                    entry.insert(0, str(member_info[i]) if member_info[i] is not None else "")
+                    ttk.Label(self, text=label_text).grid(row=i + 1, column=0, sticky=tk.W, padx=5, pady=2)
+                    if label_text == "Gender:":
+                        entry = ttk.Combobox(self, values=["F", "M"], state="readonly")
+                        entry.set(member_info[i] if member_info[i] is not None else "F") # Set default or current
+                    else:
+                        entry = ttk.Entry(self)
+                        entry.insert(0, str(member_info[i]) if member_info[i] is not None else "")
+                    entry.grid(row=i + 1, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
                     self.entries[field_names[i]] = entry
-                self.entries["student_no"].config(state='readonly') # Student number cannot be edited
+
+                self.entries["student_no"].config(state='readonly')
 
                 ttk.Button(self, text="Save Changes", command=self.save_changes).grid(row=len(labels) + 1, column=0, columnspan=2, pady=10)
             else:
                 ttk.Label(self, text="Member information not found.", foreground="red").grid(row=1, column=0, columnspan=2, pady=10)
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to load personal info for editing: {err}")
-        # No finally block to disconnect_db, connection is persistent
 
     def save_changes(self):
         updated_data = {
             "first_name": self.entries["first_name"].get().strip(),
-            "middle_name": self.entries["middle_name"].get().strip() or None, # Store empty string as NULL
+            "middle_name": self.entries["middle_name"].get().strip() or None,
             "last_name": self.entries["last_name"].get().strip(),
             "degree_program": self.entries["degree_program"].get().strip(),
             "gender": self.entries["gender"].get().strip(),
             "batch": self.entries["batch"].get().strip()
         }
 
-        # Basic validation
         if not all([updated_data["first_name"], updated_data["last_name"], updated_data["degree_program"], updated_data["gender"], updated_data["batch"]]):
             messagebox.showerror("Input Error", "Please fill in all required fields (First Name, Last Name, Degree Program, Gender, Batch).")
             return
@@ -456,7 +416,6 @@ class EditPersonalInfoPage(BasePage):
             messagebox.showerror("Input Error", "Batch must be an integer.")
             return
 
-        # No need to call connect_db here
         try:
             update_query = """
             UPDATE member SET
@@ -479,10 +438,9 @@ class EditPersonalInfoPage(BasePage):
             ))
             cnx.commit()
             messagebox.showinfo("Success", "Personal information updated successfully!")
-            self.app.show_view_personal_info_page() # Go back to view page to see changes
+            self.app.show_view_personal_info_page()
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to update personal info: {err}")
-        # No finally block to disconnect_db, connection is persistent
 
 class ViewRegisteredOrgsPage(BasePage):
     def __init__(self, master, app_instance):
@@ -499,30 +457,26 @@ class ViewRegisteredOrgsPage(BasePage):
         self.tree.heading("Status", text="Status")
         self.tree.heading("Committee", text="Committee")
 
-        # Adjust column widths
-        self.tree.column("Org Name", width=150, anchor=W)
-        self.tree.column("Academic Year", width=100, anchor=CENTER)
-        self.tree.column("Semester", width=80, anchor=CENTER)
-        self.tree.column("Role", width=100, anchor=W)
-        self.tree.column("Status", width=80, anchor=CENTER)
-        self.tree.column("Committee", width=120, anchor=W)
+        self.tree.column("Org Name", width=150, anchor=tk.W)
+        self.tree.column("Academic Year", width=100, anchor=tk.CENTER)
+        self.tree.column("Semester", width=80, anchor=tk.CENTER)
+        self.tree.column("Role", width=100, anchor=tk.W)
+        self.tree.column("Status", width=80, anchor=tk.CENTER)
+        self.tree.column("Committee", width=120, anchor=tk.W)
 
-        self.tree.grid(row=1, column=0, columnspan=2, sticky=(N, S, E, W), pady=10)
+        self.tree.grid(row=1, column=0, columnspan=2, sticky=(tk.N, tk.S, tk.E, tk.W), pady=10)
         self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1) # Allow both columns to expand
+        self.grid_columnconfigure(1, weight=1)
 
-        # Scrollbar
         scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
-        scrollbar.grid(row=1, column=2, sticky=(N, S))
+        scrollbar.grid(row=1, column=2, sticky=(tk.N, tk.S))
         self.tree.configure(yscrollcommand=scrollbar.set)
 
     def load_data(self):
-        # Clear existing data
         for i in self.tree.get_children():
             self.tree.delete(i)
 
-        # No need to call connect_db here
         try:
             query = """
             SELECT
@@ -538,7 +492,7 @@ class ViewRegisteredOrgsPage(BasePage):
                      CASE s.semester
                          WHEN 'First' THEN 2
                          WHEN 'Second' THEN 1
-                         ELSE 0 -- Handle unexpected values gracefully
+                         ELSE 0
                      END DESC;
             """
             cursor.execute(query, (CURRENT_USER_ID,))
@@ -551,14 +505,13 @@ class ViewRegisteredOrgsPage(BasePage):
                 self.tree.insert("", "end", values=("No organizations found.", "", "", "", "", ""))
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to retrieve organizations: {err}")
-        # No finally block to disconnect_db, connection is persistent
 
 
 class ViewMembersUnpaidFeesPage(BasePage):
     def __init__(self, master, app_instance):
         super().__init__(master, app_instance, "Your Unpaid Fees")
         self.create_treeview()
-        self.generate_report() # Automatically generate report on page load
+        self.generate_report()
 
     def create_treeview(self):
         self.tree = ttk.Treeview(self, columns=("Org Name", "Receipt No", "Amount", "Payment Deadline", "Date Paid", "Payment Status"), show="headings")
@@ -569,30 +522,27 @@ class ViewMembersUnpaidFeesPage(BasePage):
         self.tree.heading("Date Paid", text="Date Paid")
         self.tree.heading("Payment Status", text="Status")
 
-        self.tree.column("Org Name", width=150, anchor=W)
-        self.tree.column("Receipt No", width=100, anchor=CENTER)
-        self.tree.column("Amount", width=100, anchor=E)
-        self.tree.column("Payment Deadline", width=120, anchor=CENTER)
-        self.tree.column("Date Paid", width=100, anchor=CENTER)
-        self.tree.column("Payment Status", width=100, anchor=CENTER)
+        self.tree.column("Org Name", width=150, anchor=tk.W)
+        self.tree.column("Receipt No", width=100, anchor=tk.CENTER)
+        self.tree.column("Amount", width=100, anchor=tk.E)
+        self.tree.column("Payment Deadline", width=120, anchor=tk.CENTER)
+        self.tree.column("Date Paid", width=100, anchor=tk.CENTER)
+        self.tree.column("Payment Status", width=100, anchor=tk.CENTER)
 
-        self.tree.grid(row=1, column=0, columnspan=2, sticky=(N, S, E, W), pady=10)
+        self.tree.grid(row=1, column=0, columnspan=2, sticky=(tk.N, tk.S, tk.E, tk.W), pady=10)
         self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
         scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
-        scrollbar.grid(row=1, column=2, sticky=(N, S))
+        scrollbar.grid(row=1, column=2, sticky=(tk.N, tk.S))
         self.tree.configure(yscrollcommand=scrollbar.set)
 
     def generate_report(self):
-        # Clear existing data
         for i in self.tree.get_children():
             self.tree.delete(i)
 
-        # No need to call connect_db here
         try:
-            # SQL query from your provided list (number 3)
             query = """
             SELECT f.org_name, f.receipt_no, f.amount, f.payment_deadline, f.date_paid, f.payment_status
             FROM fee f
@@ -605,7 +555,6 @@ class ViewMembersUnpaidFeesPage(BasePage):
 
             if records:
                 for record in records:
-                    # Format date_paid if it's None to 'N/A'
                     formatted_record = list(record)
                     if formatted_record[4] is None:
                         formatted_record[4] = "N/A"
@@ -614,42 +563,294 @@ class ViewMembersUnpaidFeesPage(BasePage):
                 self.tree.insert("", "end", values=("No unpaid fees found.", "", "", "", "", ""))
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to retrieve unpaid fees: {err}")
-        # No finally block to disconnect_db, connection is persistent
 
 
 # --- Organization Pages ---
 class OrganizationMenuPage(BasePage):
     def __init__(self, master, app_instance):
-        super().__init__(master, app_instance, f"Organization Menu - {CURRENT_ORG_NAME}")
-        self.create_org_menu_widgets()
+        # We'll create our own title/header, so don't pass title to BasePage
+        super().__init__(master, app_instance, "")
+        self.back_button.destroy() # Remove default back button
 
-    def create_org_menu_widgets(self):
-        self.back_button.grid_forget() # Hide default back button
+        self.create_org_menu_layout()
+        self.apply_filters_and_generate_report() # Initial load of members on startup
 
-        row_idx = 1
-        ttk.Button(self, text="Add New Member", command=self.app.show_add_member_page).grid(row=row_idx, column=0, sticky=W, pady=5)
-        row_idx += 1
-        ttk.Button(self, text="Edit Membership Status", command=self.app.show_edit_membership_status_page).grid(row=row_idx, column=0, sticky=W, pady=5)
-        row_idx += 1
-        ttk.Button(self, text="View Executive Committee Members", command=self.app.show_view_exec_committee_page).grid(row=row_idx, column=0, sticky=W, pady=5)
-        row_idx += 1
-        ttk.Button(self, text="View Presidents by Academic Year", command=self.app.show_view_presidents_by_ay_page).grid(row=row_idx, column=0, sticky=W, pady=5)
-        row_idx += 1
-        ttk.Button(self, text="View All Late Payments", command=self.app.show_view_late_payments_page).grid(row=row_idx, column=0, sticky=W, pady=5)
-        row_idx += 1
-        ttk.Button(self, text="View Active vs Inactive Members Percentage", command=self.app.show_view_active_inactive_percentage_page).grid(row=row_idx, column=0, sticky=W, pady=5)
-        row_idx += 1
-        ttk.Button(self, text="View All Alumni Members", command=self.app.show_view_alumni_members_page).grid(row=row_idx, column=0, sticky=W, pady=5)
-        row_idx += 1
-        ttk.Button(self, text="View Total Unpaid and Paid Fees", command=self.app.show_view_total_paid_unpaid_fees_page).grid(row=row_idx, column=0, sticky=W, pady=5)
-        row_idx += 1
-        ttk.Button(self, text="View Members with Highest Debt", command=self.app.show_view_highest_debt_members_page).grid(row=row_idx, column=0, sticky=W, pady=5)
-        row_idx += 1
-        ttk.Button(self, text="View All Members by Attributes", command=self.app.show_view_all_members_by_attributes_page).grid(row=row_idx, column=0, sticky=W, pady=5)
-        row_idx += 1
-        ttk.Button(self, text="View Members with Unpaid Fees (Org POV)", command=self.app.show_view_org_unpaid_fees_page).grid(row=row_idx, column=0, sticky=W, pady=5)
-        row_idx += 1
-        ttk.Button(self, text="Logout", command=self.app.logout).grid(row=row_idx + 1, column=0, sticky=W, pady=20)
+    def create_org_menu_layout(self):
+        # Remove default title label from BasePage
+        for widget in self.winfo_children():
+            if isinstance(widget, ttk.Label) and widget.cget("text") == "":
+                widget.destroy()
+
+        # Top Header Frame
+        header_frame = ttk.Frame(self, style='AuthPanel.TFrame', padding="15")
+        header_frame.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E), padx=10, pady=10, columnspan=2)
+        header_frame.grid_columnconfigure(0, weight=0) # Icon
+        header_frame.grid_columnconfigure(1, weight=1) # Welcome text
+        header_frame.grid_columnconfigure(2, weight=0) # Logout button
+
+        # Placeholder for organization icon (e.g., from an image file if available)
+        # ttk.Label(header_frame, text="🏛️", font=("Arial", 30)).grid(row=0, column=0, rowspan=2, padx=10) # Using an emoji
+        ttk.Label(header_frame, text="Welcome, " + CURRENT_ORG_NAME, font=("Arial", 20, BOLD)).grid(row=0, column=1, sticky=tk.W, pady=(0, 5))
+        ttk.Label(header_frame, text=f"Organization ID: {CURRENT_USER_ID}").grid(row=1, column=1, sticky=tk.W)
+
+        # Get active members for current semester
+        active_members_count = self.get_active_members_count_for_current_semester()
+        ttk.Label(header_frame, text=f"Active members this semester: {active_members_count}").grid(row=2, column=1, sticky=tk.W, pady=(0, 5))
+
+        ttk.Button(header_frame, text="Log Out", command=self.app.logout).grid(row=0, column=2, sticky=tk.NE, padx=10, pady=5)
+
+
+        # Create a Notebook (tabs) for Member Management and Fees Management
+        self.notebook = ttk.Notebook(self)
+        self.notebook.grid(row=1, column=0, sticky=(tk.N, tk.W, tk.E, tk.S), padx=10, pady=10, columnspan=2)
+        self.grid_rowconfigure(1, weight=1) # Row for notebook
+        self.grid_columnconfigure(0, weight=1) # Column for notebook
+        self.grid_columnconfigure(1, weight=0) # Column for logout (already handled by header frame)
+
+
+        # Member Management Tab
+        self.member_tab = ttk.Frame(self.notebook, padding="15")
+        self.notebook.add(self.member_tab, text="Manage Members")
+        self.member_tab.grid_rowconfigure(1, weight=1) # Row for treeview
+        self.member_tab.grid_columnconfigure(0, weight=0) # Column for filters/buttons (fixed width)
+        self.member_tab.grid_columnconfigure(1, weight=1) # Column for treeview (expands)
+
+        self.create_member_tab_widgets()
+
+        # Fees Management Tab (Placeholder)
+        self.fees_tab = ttk.Frame(self.notebook, padding="15")
+        self.notebook.add(self.fees_tab, text="Manage Finances")
+        ttk.Label(self.fees_tab, text="Fees Management features will be implemented here.").pack(pady=20)
+
+
+    def get_active_members_count_for_current_semester(self):
+        try:
+            current_year = datetime.datetime.now().year
+            current_month = datetime.datetime.now().month
+            academic_year = f"{current_year}-{current_year + 1}" if current_month >= 6 else f"{current_year - 1}-{current_year}" # Assuming academic year starts in June
+            semester = "First" if current_month >= 6 or current_month <= 10 else "Second" # Simplified logic for semester
+
+            query = """
+                SELECT COUNT(DISTINCT student_no)
+                FROM serves
+                WHERE org_name = %s
+                    AND academic_year = %s
+                    AND semester = %s
+                    AND status = 'Active';
+            """
+            cursor.execute(query, (CURRENT_ORG_NAME, academic_year, semester))
+            count = cursor.fetchone()[0]
+            return count
+        except mysql.connector.Error as err:
+            print(f"Error fetching active members count: {err}")
+            return "N/A"
+
+    def create_member_tab_widgets(self):
+        # --- Left Panel: Filters & Action Buttons ---
+        left_panel = ttk.Frame(self.member_tab)
+        left_panel.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E), padx=10, pady=10)
+        left_panel.grid_columnconfigure(1, weight=1) # Makes entries/comboboxes expand
+
+        # Filter Section
+        filter_frame = ttk.LabelFrame(left_panel, text="Filters", padding="10")
+        filter_frame.grid(row=0, column=0, sticky=(tk.N, tk.W, tk.E), columnspan=2, pady=(0, 10))
+        filter_frame.grid_columnconfigure(1, weight=1)
+
+        filter_row = 0
+        self.filter_vars = {} # Dictionary to hold StringVar for filters
+
+        ttk.Label(filter_frame, text="Academic Year:").grid(row=filter_row, column=0, sticky=tk.W, pady=2)
+        self.filter_vars['academic_year'] = tk.StringVar(value=f"{datetime.datetime.now().year}-{datetime.datetime.now().year + 1}")
+        ttk.Entry(filter_frame, textvariable=self.filter_vars['academic_year']).grid(row=filter_row, column=1, sticky=(tk.W, tk.E), pady=2)
+        filter_row += 1
+
+        ttk.Label(filter_frame, text="Semester:").grid(row=filter_row, column=0, sticky=tk.W, pady=2)
+        self.filter_vars['semester'] = tk.StringVar(value="All")
+        ttk.Combobox(filter_frame, textvariable=self.filter_vars['semester'], values=["All", "First", "Second"], state="readonly").grid(row=filter_row, column=1, sticky=(tk.W, tk.E), pady=2)
+        filter_row += 1
+
+        labels_and_options = {
+            "Role:": ["All", "Member", "President", "Vice President", "EAC Chairperson", "Secretary", "Finance Chairperson", "SCC Chairperson", "MC Chairperson"],
+            "Status:": ["All", "Active", "Inactive", "Disaffiliated", "Alumni"],
+            "Gender:": ["All", "F", "M"],
+            "Degree Program:": [], # Entry, not combobox
+            "Batch:": [], # Entry, not combobox
+            "Committee:": ["All", "Executive", "Internal Academics", "External Academics", "Secretariat", "Finance", "Socio-Cultural", "Membership"]
+        }
+
+        for label_text, options in labels_and_options.items():
+            ttk.Label(filter_frame, text=label_text).grid(row=filter_row, column=0, sticky=tk.W, pady=2)
+            key = label_text.replace(":", "").replace(" ", "_").lower()
+            if options: # It's a combobox
+                var = tk.StringVar(value=options[0]) # Default to 'All' or first option
+                combobox = ttk.Combobox(filter_frame, textvariable=var, values=options, state="readonly")
+                combobox.grid(row=filter_row, column=1, sticky=(tk.W, tk.E), pady=2)
+                self.filter_vars[key] = var
+            else: # It's an entry
+                var = tk.StringVar()
+                entry = ttk.Entry(filter_frame, textvariable=var)
+                entry.grid(row=filter_row, column=1, sticky=(tk.W, tk.E), pady=2)
+                self.filter_vars[key] = var
+            filter_row += 1
+
+        ttk.Button(filter_frame, text="Apply Filters", command=self.apply_filters_and_generate_report, style='Login.TButton').grid(row=filter_row, column=0, columnspan=2, pady=10)
+
+
+        # Update Members Section
+        update_members_frame = ttk.LabelFrame(left_panel, text="Update members", padding="10")
+        update_members_frame.grid(row=1, column=0, sticky=(tk.N, tk.W, tk.E), columnspan=2, pady=(10, 10))
+        update_members_frame.grid_columnconfigure(0, weight=1) # Make buttons expand
+
+        ttk.Button(update_members_frame, text="Add new member", command=self.app.show_add_member_page, style='Login.TButton').grid(row=0, column=0, sticky=(tk.W, tk.E), pady=5)
+        ttk.Button(update_members_frame, text="Edit member details", command=self.app.show_edit_membership_status_page, style='Login.TButton').grid(row=1, column=0, sticky=(tk.W, tk.E), pady=5)
+
+
+        # Active Members Section
+        active_members_frame = ttk.LabelFrame(left_panel, text="Active Members", padding="10")
+        active_members_frame.grid(row=2, column=0, sticky=(tk.N, tk.W, tk.E), columnspan=2, pady=(10, 0))
+        active_members_frame.grid_columnconfigure(0, weight=1)
+
+        ttk.Button(active_members_frame, text="View Active Members", command=self.generate_active_members_only_report, style='Login.TButton').grid(row=0, column=0, sticky=(tk.W, tk.E), pady=5)
+
+        # --- Right Panel: Table of Members ---
+        self.member_list_tree = ttk.Treeview(self.member_tab, show="headings")
+        self.member_list_tree.grid(row=0, column=1, sticky=(tk.N, tk.W, tk.E, tk.S), padx=10, pady=10, rowspan=2) # Spans two rows
+        self.member_tab.grid_rowconfigure(0, weight=1) # Make table row expandable
+        self.member_tab.grid_columnconfigure(1, weight=1) # Make table column expandable
+
+        # Scrollbar for member list treeview
+        member_list_scrollbar = ttk.Scrollbar(self.member_tab, orient="vertical", command=self.member_list_tree.yview)
+        member_list_scrollbar.grid(row=0, column=2, sticky=(tk.N, tk.S), rowspan=2)
+        self.member_list_tree.configure(yscrollcommand=member_list_scrollbar.set)
+
+        self.set_default_treeview_columns()
+
+    def set_default_treeview_columns(self):
+        columns = ("Student No", "Full Name", "Degree Program", "Gender", "Batch", "Academic Year", "Semester", "Role", "Status", "Committee")
+        headings = ("Student No", "Full Name", "Degree Program", "Gender", "Batch", "Academic Year", "Semester", "Role", "Status", "Committee")
+        widths = (100, 180, 150, 70, 70, 100, 80, 100, 80, 120)
+        anchors = (tk.CENTER, tk.W, tk.W, tk.CENTER, tk.CENTER, tk.CENTER, tk.CENTER, tk.W, tk.CENTER, tk.W)
+        self.set_treeview_columns(self.member_list_tree, columns, headings, widths, anchors)
+
+    def clear_treeview(self, tree):
+        for i in tree.get_children():
+            tree.delete(i)
+
+    def set_treeview_columns(self, tree, columns, headings, widths, anchors):
+        tree["columns"] = columns
+        tree["displaycolumns"] = columns
+        for col, heading in zip(columns, headings):
+            tree.heading(col, text=heading)
+        for col, width, anchor in zip(columns, widths, anchors):
+            tree.column(col, width=width, anchor=anchor)
+
+    def apply_filters_and_generate_report(self):
+        # This function generates the main "All Members" report based on current filters
+        self.clear_treeview(self.member_list_tree)
+        self.set_default_treeview_columns() # Reset columns for the full member list view
+
+        try:
+            query = """
+            SELECT
+                m.student_no,
+                CONCAT(m.first_name, ' ', IFNULL(m.middle_name, ''), ' ', m.last_name) AS full_name,
+                m.degree_program,
+                m.gender,
+                m.batch,
+                s.academic_year,
+                s.semester,
+                s.role,
+                s.status,
+                s.committee
+            FROM member m
+            JOIN serves s ON m.student_no = s.student_no
+            WHERE s.org_name = %s
+            """
+            params = [CURRENT_ORG_NAME]
+
+            # Dynamically add filters
+            if self.filter_vars['academic_year'].get():
+                query += " AND s.academic_year = %s"
+                params.append(self.filter_vars['academic_year'].get())
+            if self.filter_vars['semester'].get() != "All":
+                query += " AND s.semester = %s"
+                params.append(self.filter_vars['semester'].get())
+            if self.filter_vars['role'].get() != "All":
+                query += " AND s.role = %s"
+                params.append(self.filter_vars['role'].get())
+            if self.filter_vars['status'].get() != "All":
+                query += " AND s.status = %s"
+                params.append(self.filter_vars['status'].get())
+            if self.filter_vars['gender'].get() != "All":
+                query += " AND m.gender = %s"
+                params.append(self.filter_vars['gender'].get())
+            if self.filter_vars['degree_program'].get():
+                query += " AND m.degree_program LIKE %s"
+                params.append(f"%{self.filter_vars['degree_program'].get()}%")
+            if self.filter_vars['batch'].get():
+                query += " AND m.batch = %s"
+                params.append(int(self.filter_vars['batch'].get()))
+            if self.filter_vars['committee'].get() != "All":
+                query += " AND s.committee = %s"
+                params.append(self.filter_vars['committee'].get())
+
+            query += " ORDER BY m.last_name, m.first_name, s.academic_year DESC, s.semester DESC;"
+
+            cursor.execute(query, tuple(params))
+            records = cursor.fetchall()
+
+            if records:
+                for record in records:
+                    self.member_list_tree.insert("", "end", values=record)
+            else:
+                self.member_list_tree.insert("", "end", values=("No members found matching criteria.",) + ("",) * (len(columns) - 1))
+        except ValueError:
+            messagebox.showerror("Input Error", "Batch must be an integer.")
+        except mysql.connector.Error as err:
+            messagebox.showerror("Database Error", f"Failed to retrieve members: {err}")
+
+    def generate_active_members_only_report(self):
+        self.clear_treeview(self.member_list_tree)
+        self.set_default_treeview_columns() # Use default columns for consistency
+
+        try:
+            # Determine current academic year and semester
+            current_year = datetime.datetime.now().year
+            current_month = datetime.datetime.now().month
+            academic_year = f"{current_year}-{current_year + 1}" if current_month >= 6 else f"{current_year - 1}-{current_year}"
+            semester = "First" if current_month >= 6 or current_month <= 10 else "Second"
+
+            query = """
+            SELECT
+                m.student_no,
+                CONCAT(m.first_name, ' ', IFNULL(m.middle_name, ''), ' ', m.last_name) AS full_name,
+                m.degree_program,
+                m.gender,
+                m.batch,
+                s.academic_year,
+                s.semester,
+                s.role,
+                s.status,
+                s.committee
+            FROM member m
+            JOIN serves s ON m.student_no = s.student_no
+            WHERE s.org_name = %s
+                AND s.academic_year = %s
+                AND s.semester = %s
+                AND s.status = 'Active'
+            ORDER BY m.last_name, m.first_name;
+            """
+            cursor.execute(query, (CURRENT_ORG_NAME, academic_year, semester))
+            records = cursor.fetchall()
+
+            if records:
+                for record in records:
+                    self.member_list_tree.insert("", "end", values=record)
+            else:
+                columns = ("Student No", "Full Name", "Degree Program", "Gender", "Batch", "Academic Year", "Semester", "Role", "Status", "Committee")
+                self.member_list_tree.insert("", "end", values=(f"No active members for {academic_year} {semester}.",) + ("",) * (len(columns) - 1))
+        except mysql.connector.Error as err:
+            messagebox.showerror("Database Error", f"Failed to retrieve active members: {err}")
 
 
 class AddNewMemberPage(BasePage):
@@ -662,17 +863,35 @@ class AddNewMemberPage(BasePage):
         self.entries = {}
 
         for i, text in enumerate(labels):
-            ttk.Label(self, text=text).grid(row=i + 1, column=0, sticky=W, padx=5, pady=2)
+            ttk.Label(self, text=text).grid(row=i + 1, column=0, sticky=tk.W, padx=5, pady=2)
 
             if text == "Semester:":
-                self.semester_options = ["First", "Second"] # REMOVED "Midyear"
+                self.semester_options = ["First", "Second"]
                 self.semester_combobox = ttk.Combobox(self, values=self.semester_options, state="readonly")
-                self.semester_combobox.grid(row=i + 1, column=1, sticky=(W, E), padx=5, pady=2)
+                self.semester_combobox.grid(row=i + 1, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
                 self.semester_combobox.set("First")
                 self.entries['semester'] = self.semester_combobox
+            elif text == "Role:": # Explicitly assign role combobox
+                self.role_options = ["Member", "President", "Vice President", "EAC Chairperson", "Secretary", "Finance Chairperson", "SCC Chairperson", "MC Chairperson"]
+                self.role_combobox = ttk.Combobox(self, values=self.role_options, state="readonly")
+                self.role_combobox.grid(row=i + 1, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
+                self.role_combobox.set("Member")
+                self.entries['role'] = self.role_combobox
+            elif text == "Status:": # Explicitly assign status combobox
+                self.status_options = ["Active", "Inactive", "Disaffiliated", "Alumni"]
+                self.status_combobox = ttk.Combobox(self, values=self.status_options, state="readonly")
+                self.status_combobox.grid(row=i + 1, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
+                self.status_combobox.set("Active")
+                self.entries['status'] = self.status_combobox
+            elif text == "Committee:": # Explicitly assign committee combobox
+                self.committee_options = ["Executive", "Internal Academics", "External Academics", "Secretariat", "Finance", "Socio-Cultural", "Membership"]
+                self.committee_combobox = ttk.Combobox(self, values=self.committee_options, state="readonly")
+                self.committee_combobox.grid(row=i + 1, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
+                self.committee_combobox.set("Executive")
+                self.entries['committee'] = self.committee_combobox
             else:
                 entry = ttk.Entry(self)
-                entry.grid(row=i + 1, column=1, sticky=(W, E), padx=5, pady=2)
+                entry.grid(row=i + 1, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
                 self.entries[text.replace(":", "").replace(" ", "_").lower()] = entry
 
 
@@ -696,6 +915,7 @@ class AddNewMemberPage(BasePage):
         self.entries['committee'] = self.committee_combobox
 
 
+
         ttk.Button(self, text="Add Member", command=self.add_member).grid(row=len(labels) + 1, column=0, columnspan=2, pady=10)
 
     def add_member(self):
@@ -705,7 +925,7 @@ class AddNewMemberPage(BasePage):
         role = self.entries['role'].get().strip()
         status = self.entries['status'].get().strip()
         committee = self.entries['committee'].get().strip()
-        membership_fee = 250.00
+        membership_fee = 250.00 # Assuming a default fee
 
         if not all([student_no, academic_year, semester, role, status, committee]):
             messagebox.showerror("Input Error", "Please fill in all fields.")
@@ -750,11 +970,10 @@ class AddNewMemberPage(BasePage):
 
             cnx.commit()
             messagebox.showinfo("Success", f"Member {student_no} added to {CURRENT_ORG_NAME} successfully!")
-            self.app.show_organization_menu()
+            self.app.show_organization_menu() # Go back to main organization menu
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to add member: {err}")
 
-# ... (Remaining classes and App definition)
 
 class EditMembershipStatusPage(BasePage):
     def __init__(self, master, app_instance):
@@ -762,64 +981,60 @@ class EditMembershipStatusPage(BasePage):
         self.create_form()
 
     def create_form(self):
-        # Input fields for filtering/selecting member
-        ttk.Label(self, text="Student No:").grid(row=1, column=0, sticky=W, padx=5, pady=2)
+        ttk.Label(self, text="Student No:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=2)
         self.student_no_entry = ttk.Entry(self)
-        self.student_no_entry.grid(row=1, column=1, sticky=(W, E), padx=5, pady=2)
+        self.student_no_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
 
-        ttk.Label(self, text="Academic Year:").grid(row=2, column=0, sticky=W, padx=5, pady=2)
+        ttk.Label(self, text="Academic Year:").grid(row=2, column=0, sticky=tk.W, padx=5, pady=2)
         self.academic_year_entry = ttk.Entry(self)
-        self.academic_year_entry.grid(row=2, column=1, sticky=(W, E), padx=5, pady=2)
+        self.academic_year_entry.grid(row=2, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
 
-        ttk.Label(self, text="Semester:").grid(row=3, column=0, sticky=W, padx=5, pady=2)
-        self.semester_options = ["First", "Second"] # REMOVED "Midyear"
+        ttk.Label(self, text="Semester:").grid(row=3, column=0, sticky=tk.W, padx=5, pady=2)
+        self.semester_options = ["First", "Second"]
         self.semester_combobox = ttk.Combobox(self, values=self.semester_options, state="readonly")
-        self.semester_combobox.grid(row=3, column=1, sticky=(W, E), padx=5, pady=2)
-        self.semester_combobox.set("First") # Default value
+        self.semester_combobox.grid(row=3, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
+        self.semester_combobox.set("First")
 
         ttk.Button(self, text="Load Member Info", command=self.load_member_info).grid(row=4, column=0, columnspan=2, pady=10)
 
-        # Labels/Comboboxes for displaying and editing current status
         self.status_frame = ttk.LabelFrame(self, text="Current Status Details", padding="10")
-        self.status_frame.grid(row=5, column=0, columnspan=2, sticky=(N, W, E, S), pady=10)
+        self.status_frame.grid(row=5, column=0, columnspan=2, sticky=(tk.N, tk.W, tk.E, tk.S), pady=10)
 
-        ttk.Label(self.status_frame, text="Current Role:").grid(row=0, column=0, sticky=W, padx=5, pady=2)
+        ttk.Label(self.status_frame, text="Current Role:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=2)
         self.current_role_label = ttk.Label(self.status_frame, text="")
-        self.current_role_label.grid(row=0, column=1, sticky=W, padx=5, pady=2)
+        self.current_role_label.grid(row=0, column=1, sticky=tk.W, padx=5, pady=2)
 
-        ttk.Label(self.status_frame, text="Current Status:").grid(row=1, column=0, sticky=W, padx=5, pady=2)
+        ttk.Label(self.status_frame, text="Current Status:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=2)
         self.current_status_label = ttk.Label(self.status_frame, text="")
-        self.current_status_label.grid(row=1, column=1, sticky=W, padx=5, pady=2)
+        self.current_status_label.grid(row=1, column=1, sticky=tk.W, padx=5, pady=2)
 
-        ttk.Label(self.status_frame, text="Current Committee:").grid(row=2, column=0, sticky=W, padx=5, pady=2)
+        ttk.Label(self.status_frame, text="Current Committee:").grid(row=2, column=0, sticky=tk.W, padx=5, pady=2)
         self.current_committee_label = ttk.Label(self.status_frame, text="")
-        self.current_committee_label.grid(row=2, column=1, sticky=W, padx=5, pady=2)
+        self.current_committee_label.grid(row=2, column=1, sticky=tk.W, padx=5, pady=2)
 
-        # New values for update
-        ttk.Label(self.status_frame, text="New Role:").grid(row=3, column=0, sticky=W, padx=5, pady=2)
-        self.role_options = ["Member", "Executive President", "VP Internal", "VP External", "Secretary", "Treasurer"]
+        ttk.Label(self.status_frame, text="New Role:").grid(row=3, column=0, sticky=tk.W, padx=5, pady=2)
+        self.role_options = ["Member", "President", "Vice President", "EAC Chairperson", "Secretary", "Finance Chairperson", "SCC Chairperson", "MC Chairperson"]
         self.new_role_combobox = ttk.Combobox(self.status_frame, values=self.role_options, state="readonly")
-        self.new_role_combobox.grid(row=3, column=1, sticky=(W, E), padx=5, pady=2)
+        self.new_role_combobox.grid(row=3, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
 
-        ttk.Label(self.status_frame, text="New Status:").grid(row=4, column=0, sticky=W, padx=5, pady=2)
-        self.status_options = ["Active", "Inactive", "Dismissed", "Alumni"]
+        ttk.Label(self.status_frame, text="New Status:").grid(row=4, column=0, sticky=tk.W, padx=5, pady=2)
+        self.status_options = ["Active", "Inactive", "Disaffiliated", "Alumni"]
         self.new_status_combobox = ttk.Combobox(self.status_frame, values=self.status_options, state="readonly")
-        self.new_status_combobox.grid(row=4, column=1, sticky=(W, E), padx=5, pady=2)
+        self.new_status_combobox.grid(row=4, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
 
-        ttk.Label(self.status_frame, text="New Committee:").grid(row=5, column=0, sticky=W, padx=5, pady=2)
-        self.committee_options = ["Executive", "Finance", "Logistics", "Publicity", "Internal Affairs", "External Affairs"]
+        ttk.Label(self.status_frame, text="New Committee:").grid(row=5, column=0, sticky=tk.W, padx=5, pady=2)
+        self.committee_options = ["Executive", "Internal Academics", "External Academics", "Secretariat", "Finance", "Socio-Cultural", "Membership"]
         self.new_committee_combobox = ttk.Combobox(self.status_frame, values=self.committee_options, state="readonly")
-        self.new_committee_combobox.grid(row=5, column=1, sticky=(W, E), padx=5, pady=2)
+        self.new_committee_combobox.grid(row=5, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
 
         ttk.Button(self.status_frame, text="Update Status", command=self.update_status).grid(row=6, column=0, columnspan=2, pady=10)
 
-        # Initially hide status frame until member info is loaded
         self.status_frame.grid_remove()
 
     def load_member_info(self):
         student_no = self.student_no_entry.get().strip()
         academic_year = self.academic_year_entry.get().strip()
-        semester = self.semester_combobox.get().strip() # Get from combobox
+        semester = self.semester_combobox.get().strip()
 
         if not all([student_no, academic_year, semester]):
             messagebox.showerror("Input Error", "Please enter Student No, Academic Year, and Semester.")
@@ -842,17 +1057,17 @@ class EditMembershipStatusPage(BasePage):
                 self.new_status_combobox.set(member_status_info[1])
                 self.new_committee_combobox.set(member_status_info[2])
 
-                self.status_frame.grid() # Show the frame
+                self.status_frame.grid()
             else:
                 messagebox.showinfo("Not Found", f"Member {student_no} not found in {CURRENT_ORG_NAME} for {academic_year} {semester}.")
-                self.status_frame.grid_remove() # Hide if not found
+                self.status_frame.grid_remove()
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to load member status: {err}")
 
     def update_status(self):
         student_no = self.student_no_entry.get().strip()
         academic_year = self.academic_year_entry.get().strip()
-        semester = self.semester_combobox.get().strip() # Get from combobox
+        semester = self.semester_combobox.get().strip()
         new_role = self.new_role_combobox.get().strip()
         new_status = self.new_status_combobox.get().strip()
         new_committee = self.new_committee_combobox.get().strip()
@@ -870,182 +1085,27 @@ class EditMembershipStatusPage(BasePage):
             cursor.execute(update_query, (new_role, new_status, new_committee, student_no, CURRENT_ORG_NAME, academic_year, semester))
             cnx.commit()
             messagebox.showinfo("Success", "Membership status updated successfully!")
-            self.load_member_info() # Reload to show updated status
+            self.load_member_info()
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to update membership status: {err}")
 
-class ViewExecutiveCommitteePage(BasePage):
-    def __init__(self, master, app_instance):
-        super().__init__(master, app_instance, f"Executive Committee Members of {CURRENT_ORG_NAME}")
-        self.create_widgets_with_filters()
-
-    def create_widgets_with_filters(self):
-        # Filter inputs
-        ttk.Label(self, text="Academic Year:").grid(row=1, column=0, sticky=W, padx=5, pady=2)
-        self.academic_year_entry = ttk.Entry(self)
-        self.academic_year_entry.grid(row=1, column=1, sticky=(W, E), padx=5, pady=2)
-        self.academic_year_entry.insert(0, datetime.datetime.now().strftime('%Y') + "-" + str(datetime.datetime.now().year + 1)) # Default to current/next year
-
-        ttk.Button(self, text="Generate Report", command=self.generate_report).grid(row=2, column=0, columnspan=2, pady=10)
-
-        # Treeview for displaying results
-        self.tree = ttk.Treeview(self, columns=("Student No", "First Name", "Middle Name", "Last Name", "Role", "Status", "Committee"), show="headings")
-        self.tree.heading("Student No", text="Student No")
-        self.tree.heading("First Name", text="First Name")
-        self.tree.heading("Middle Name", text="Middle Name")
-        self.tree.heading("Last Name", text="Last Name")
-        self.tree.heading("Role", text="Role")
-        self.tree.heading("Status", text="Status")
-        self.tree.heading("Committee", text="Committee")
-
-        self.tree.column("Student No", width=100, anchor=CENTER)
-        self.tree.column("First Name", width=100, anchor=W)
-        self.tree.column("Middle Name", width=100, anchor=W)
-        self.tree.column("Last Name", width=100, anchor=W)
-        self.tree.column("Role", width=100, anchor=W)
-        self.tree.column("Status", width=80, anchor=CENTER)
-        self.tree.column("Committee", width=100, anchor=W)
-
-        self.tree.grid(row=3, column=0, columnspan=2, sticky=(N, S, E, W), pady=10)
-        self.grid_rowconfigure(3, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
-        scrollbar.grid(row=3, column=2, sticky=(N, S))
-        self.tree.configure(yscrollcommand=scrollbar.set)
-
-    def generate_report(self):
-        academic_year = self.academic_year_entry.get().strip()
-
-        if not academic_year:
-            messagebox.showerror("Input Error", "Please enter an Academic Year.")
-            return
-
-        for i in self.tree.get_children():
-            self.tree.delete(i)
-
-        try:
-            query = """
-            SELECT
-                m.student_no,
-                m.first_name,
-                m.middle_name,
-                m.last_name,
-                s.role,
-                s.status,
-                s.committee
-            FROM member m
-            JOIN serves s
-                ON m.student_no = s.student_no
-            WHERE s.org_name = %s
-                AND s.academic_year = %s
-                AND s.committee = "Executive"
-            ORDER BY m.last_name, m.first_name;
-            """
-            cursor.execute(query, (CURRENT_ORG_NAME, academic_year))
-            records = cursor.fetchall()
-
-            if records:
-                for record in records:
-                    self.tree.insert("", "end", values=record)
-            else:
-                self.tree.insert("", "end", values=("No executive committee members found for this year.", "", "", "", "", "", ""))
-        except mysql.connector.Error as err:
-            messagebox.showerror("Database Error", f"Failed to retrieve executive committee members: {err}")
-
-class ViewPresidentsByAYPage(BasePage):
-    def __init__(self, master, app_instance):
-        super().__init__(master, app_instance, f"Presidents of {CURRENT_ORG_NAME} by Academic Year")
-        self.create_widgets_with_filters()
-
-    def create_widgets_with_filters(self):
-        ttk.Label(self, text="Role:").grid(row=1, column=0, sticky=W, padx=5, pady=2)
-        self.role_options = ["President", "Executive President"] # Add other president roles if applicable
-        self.role_combobox = ttk.Combobox(self, values=self.role_options, state="readonly")
-        self.role_combobox.grid(row=1, column=1, sticky=(W, E), padx=5, pady=2)
-        self.role_combobox.set("President") # Default
-
-        ttk.Button(self, text="Generate Report", command=self.generate_report).grid(row=2, column=0, columnspan=2, pady=10)
-
-        self.tree = ttk.Treeview(self, columns=("Academic Year", "Semester", "Student No", "First Name", "Last Name"), show="headings")
-        self.tree.heading("Academic Year", text="Academic Year")
-        self.tree.heading("Semester", text="Semester")
-        self.tree.heading("Student No", text="Student No")
-        self.tree.heading("First Name", text="First Name")
-        self.tree.heading("Last Name", text="Last Name")
-
-        self.tree.column("Academic Year", width=100, anchor=CENTER)
-        self.tree.column("Semester", width=80, anchor=CENTER)
-        self.tree.column("Student No", width=100, anchor=CENTER)
-        self.tree.column("First Name", width=120, anchor=W)
-        self.tree.column("Last Name", width=120, anchor=W)
-
-        self.tree.grid(row=3, column=0, columnspan=2, sticky=(N, S, E, W), pady=10)
-        self.grid_rowconfigure(3, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
-        scrollbar.grid(row=3, column=2, sticky=(N, S))
-        self.tree.configure(yscrollcommand=scrollbar.set)
-
-    def generate_report(self):
-        selected_role = self.role_combobox.get().strip()
-
-        if not selected_role:
-            messagebox.showerror("Input Error", "Please select a Role.")
-            return
-
-        for i in self.tree.get_children():
-            self.tree.delete(i)
-
-        try:
-            query = """
-            SELECT
-                s.academic_year,
-                s.semester,
-                m.student_no,
-                m.first_name,
-                m.last_name
-            FROM member m
-            JOIN serves s
-                ON m.student_no = s.student_no
-            WHERE s.org_name = %s
-                AND s.role = %s
-            ORDER BY s.academic_year DESC,
-                     CASE s.semester
-                         WHEN 'First' THEN 2
-                         WHEN 'Second' THEN 1
-                         ELSE 0 -- Fallback for unexpected values
-                     END DESC;
-            """
-            cursor.execute(query, (CURRENT_ORG_NAME, selected_role))
-            records = cursor.fetchall()
-
-            if records:
-                for record in records:
-                    self.tree.insert("", "end", values=record)
-            else:
-                messagebox.showinfo("No Data", f"No {selected_role} found for {CURRENT_ORG_NAME}.")
-        except mysql.connector.Error as err:
-            messagebox.showerror("Database Error", f"Failed to retrieve presidents: {err}")
-
+# --- Placeholder for other Organization POV pages (now mostly integrated or removed) ---
+# ViewLatePaymentsPage (kept separate as it's fees-related)
 class ViewLatePaymentsPage(BasePage):
     def __init__(self, master, app_instance):
         super().__init__(master, app_instance, f"Late Payments for {CURRENT_ORG_NAME}")
         self.create_widgets_with_filters()
 
     def create_widgets_with_filters(self):
-        ttk.Label(self, text="Academic Year:").grid(row=1, column=0, sticky=W, padx=5, pady=2)
+        ttk.Label(self, text="Academic Year:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=2)
         self.academic_year_entry = ttk.Entry(self)
-        self.academic_year_entry.grid(row=1, column=1, sticky=(W, E), padx=5, pady=2)
+        self.academic_year_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
         self.academic_year_entry.insert(0, datetime.datetime.now().strftime('%Y') + "-" + str(datetime.datetime.now().year + 1))
 
-        ttk.Label(self, text="Semester:").grid(row=2, column=0, sticky=W, padx=5, pady=2)
-        self.semester_options = ["First", "Second"] # REMOVED "Midyear"
+        ttk.Label(self, text="Semester:").grid(row=2, column=0, sticky=tk.W, padx=5, pady=2)
+        self.semester_options = ["First", "Second"]
         self.semester_combobox = ttk.Combobox(self, values=self.semester_options, state="readonly")
-        self.semester_combobox.grid(row=2, column=1, sticky=(W, E), padx=5, pady=2)
+        self.semester_combobox.grid(row=2, column=1, sticky=(tk.W, tk.E), padx=5, pady=2)
         self.semester_combobox.set("First")
 
         ttk.Button(self, text="Generate Report", command=self.generate_report).grid(row=3, column=0, columnspan=2, pady=10)
@@ -1053,27 +1113,27 @@ class ViewLatePaymentsPage(BasePage):
         self.tree = ttk.Treeview(self, columns=("Student No", "Name", "Receipt No", "Amount", "Deadline", "Date Paid", "Status"), show="headings")
         self.tree.heading("Student No", text="Student No")
         self.tree.heading("Name", text="Name")
-        self.tree.heading("Receipt No", text="Receipt No")
-        self.tree.heading("Amount", text="Amount")
+        self.tree.heading("Receipt No", text="Receipt Number")
+        self.tree.heading("Amount", text="Amount (PHP)")
         self.tree.heading("Deadline", text="Payment Deadline")
         self.tree.heading("Date Paid", text="Date Paid")
         self.tree.heading("Status", text="Status")
 
-        self.tree.column("Student No", width=80, anchor=CENTER)
-        self.tree.column("Name", width=150, anchor=W)
-        self.tree.column("Receipt No", width=80, anchor=CENTER)
-        self.tree.column("Amount", width=80, anchor=E)
-        self.tree.column("Deadline", width=100, anchor=CENTER)
-        self.tree.column("Date Paid", width=100, anchor=CENTER)
-        self.tree.column("Status", width=80, anchor=CENTER)
+        self.tree.column("Student No", width=100, anchor=tk.CENTER)
+        self.tree.column("Name", width=150, anchor=tk.W)
+        self.tree.column("Receipt No", width=100, anchor=tk.CENTER)
+        self.tree.column("Amount", width=100, anchor=tk.E)
+        self.tree.column("Deadline", width=120, anchor=tk.CENTER)
+        self.tree.column("Date Paid", width=100, anchor=tk.CENTER)
+        self.tree.column("Status", width=100, anchor=tk.CENTER)
 
-        self.tree.grid(row=4, column=0, columnspan=2, sticky=(N, S, E, W), pady=10)
+        self.tree.grid(row=4, column=0, columnspan=2, sticky=(tk.N, tk.S, tk.E, tk.W), pady=10)
         self.grid_rowconfigure(4, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
         scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
-        scrollbar.grid(row=4, column=2, sticky=(N, S))
+        scrollbar.grid(row=4, column=2, sticky=(tk.N, tk.S))
         self.tree.configure(yscrollcommand=scrollbar.set)
 
     def generate_report(self):
@@ -1081,7 +1141,7 @@ class ViewLatePaymentsPage(BasePage):
         semester = self.semester_combobox.get().strip()
 
         if not all([academic_year, semester]):
-            messagebox.showerror("Input Error", "Please select Academic Year and Semester.")
+            messagebox.showerror("Input Error", "Please enter Academic Year and Semester.")
             return
 
         for i in self.tree.get_children():
@@ -1090,8 +1150,8 @@ class ViewLatePaymentsPage(BasePage):
         try:
             query = """
             SELECT
-                m.student_no,
-                CONCAT(m.first_name, ' ', m.last_name),
+                f.student_no,
+                CONCAT(m.first_name, ' ', IFNULL(m.middle_name, ''), ' ', m.last_name) AS full_name,
                 f.receipt_no,
                 f.amount,
                 f.payment_deadline,
@@ -1099,11 +1159,11 @@ class ViewLatePaymentsPage(BasePage):
                 f.payment_status
             FROM fee f
             JOIN serves s ON f.student_no = s.student_no AND f.org_name = s.org_name
-            JOIN member m ON m.student_no = s.student_no
-            WHERE s.org_name = %s
+            JOIN member m ON f.student_no = m.student_no
+            WHERE (f.payment_status = "Late" OR f.date_paid > f.payment_deadline)
+                AND s.org_name = %s
                 AND s.academic_year = %s
                 AND s.semester = %s
-                AND (f.payment_status = 'Late' OR f.date_paid > f.payment_deadline)
             ORDER BY f.date_paid DESC;
             """
             cursor.execute(query, (CURRENT_ORG_NAME, academic_year, semester))
@@ -1112,555 +1172,21 @@ class ViewLatePaymentsPage(BasePage):
             if records:
                 for record in records:
                     formatted_record = list(record)
-                    if formatted_record[5] is None: formatted_record[5] = "N/A" # date_paid
+                    if formatted_record[5] is None: # date_paid column
+                        formatted_record[5] = "N/A"
                     self.tree.insert("", "end", values=formatted_record)
             else:
-                messagebox.showinfo("No Data", "No late payments found for the specified semester and academic year.")
+                self.tree.insert("", "end", values=("No late payments found for this period.", "", "", "", "", "", ""))
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to retrieve late payments: {err}")
 
-class ViewActiveInactivePercentagePage(BasePage):
-    def __init__(self, master, app_instance):
-        super().__init__(master, app_instance, f"Active vs Inactive Members Percentage for {CURRENT_ORG_NAME}")
-        self.create_widgets_with_filters()
 
-    def create_widgets_with_filters(self):
-        ttk.Label(self, text="Academic Year:").grid(row=1, column=0, sticky=W, padx=5, pady=2)
-        self.academic_year_entry = ttk.Entry(self)
-        self.academic_year_entry.grid(row=1, column=1, sticky=(W, E), padx=5, pady=2)
-        self.academic_year_entry.insert(0, datetime.datetime.now().strftime('%Y') + "-" + str(datetime.datetime.now().year + 1))
-
-        ttk.Label(self, text="Semester:").grid(row=2, column=0, sticky=W, padx=5, pady=2)
-        self.semester_options = ["First", "Second"] # REMOVED "Midyear"
-        self.semester_combobox = ttk.Combobox(self, values=self.semester_options, state="readonly")
-        self.semester_combobox.grid(row=2, column=1, sticky=(W, E), padx=5, pady=2)
-        self.semester_combobox.set("First")
-
-        ttk.Button(self, text="Generate Report", command=self.generate_report).grid(row=3, column=0, columnspan=2, pady=10)
-
-        # Treeview for displaying results
-        self.tree = ttk.Treeview(self, columns=("Status", "Count", "Percentage"), show="headings")
-        self.tree.heading("Status", text="Status")
-        self.tree.heading("Count", text="Number of Members")
-        self.tree.heading("Percentage", text="Percentage (%)")
-
-        self.tree.column("Status", width=100, anchor=W)
-        self.tree.column("Count", width=120, anchor=CENTER)
-        self.tree.column("Percentage", width=100, anchor=E)
-
-        self.tree.grid(row=4, column=0, columnspan=2, sticky=(N, S, E, W), pady=10)
-        self.grid_rowconfigure(4, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
-        scrollbar.grid(row=4, column=2, sticky=(N, S))
-        self.tree.configure(yscrollcommand=scrollbar.set)
-
-
-    def generate_report(self):
-        academic_year = self.academic_year_entry.get().strip()
-        semester = self.semester_combobox.get().strip()
-
-        if not all([academic_year, semester]):
-            messagebox.showerror("Input Error", "Please select Academic Year and Semester.")
-            return
-
-        for i in self.tree.get_children():
-            self.tree.delete(i)
-
-        try:
-            # Query to get total members for the given org, academic year, and semester
-            cursor.execute("""
-                SELECT COUNT(student_no)
-                FROM serves
-                WHERE org_name = %s AND academic_year = %s AND semester = %s
-            """, (CURRENT_ORG_NAME, academic_year, semester))
-            total_members = cursor.fetchone()[0]
-
-            if total_members == 0:
-                messagebox.showinfo("No Data", "No members found for the specified semester and academic year.")
-                return
-
-            # Query to get counts by status
-            query_status_counts = """
-            SELECT
-                s.status,
-                COUNT(s.student_no)
-            FROM serves s
-            WHERE s.org_name = %s
-                AND s.academic_year = %s
-                AND s.semester = %s
-            GROUP BY s.status;
-            """
-            cursor.execute(query_status_counts, (CURRENT_ORG_NAME, academic_year, semester))
-            status_counts = cursor.fetchall()
-
-            for status, count in status_counts:
-                percentage = (count / total_members) * 100
-                self.tree.insert("", "end", values=(status, count, f"{percentage:.2f}%"))
-
-        except mysql.connector.Error as err:
-            messagebox.showerror("Database Error", f"Failed to retrieve active/inactive percentage: {err}")
-
-class ViewAlumniMembersPage(BasePage):
-    def __init__(self, master, app_instance):
-        super().__init__(master, app_instance, f"Alumni Members of {CURRENT_ORG_NAME}")
-        self.create_widgets_with_filters()
-
-    def create_widgets_with_filters(self):
-        ttk.Label(self, text="Academic Year (as of):").grid(row=1, column=0, sticky=W, padx=5, pady=2)
-        self.academic_year_entry = ttk.Entry(self)
-        self.academic_year_entry.grid(row=1, column=1, sticky=(W, E), padx=5, pady=2)
-        self.academic_year_entry.insert(0, str(datetime.datetime.now().year)) # Default to current year
-
-        ttk.Button(self, text="Generate Report", command=self.generate_report).grid(row=2, column=0, columnspan=2, pady=10)
-
-        self.tree = ttk.Treeview(self, columns=("Student No", "First Name", "Last Name", "Batch", "Last Active AY", "Last Active Semester", "Role", "Committee"), show="headings")
-        self.tree.heading("Student No", text="Student No")
-        self.tree.heading("First Name", text="First Name")
-        self.tree.heading("Last Name", text="Last Name")
-        self.tree.heading("Batch", text="Batch")
-        self.tree.heading("Last Active AY", text="Last Active AY")
-        self.tree.heading("Last Active Semester", text="Last Active Semester")
-        self.tree.heading("Role", text="Role")
-        self.tree.heading("Committee", text="Committee")
-
-        self.tree.column("Student No", width=80, anchor=CENTER)
-        self.tree.column("First Name", width=120, anchor=W)
-        self.tree.column("Last Name", width=120, anchor=W)
-        self.tree.column("Batch", width=60, anchor=CENTER)
-        self.tree.column("Last Active AY", width=100, anchor=CENTER)
-        self.tree.column("Last Active Semester", width=100, anchor=CENTER)
-        self.tree.column("Role", width=100, anchor=W)
-        self.tree.column("Committee", width=100, anchor=W)
-
-        self.tree.grid(row=3, column=0, columnspan=2, sticky=(N, S, E, W), pady=10)
-        self.grid_rowconfigure(3, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
-        scrollbar.grid(row=3, column=2, sticky=(N, S))
-        self.tree.configure(yscrollcommand=scrollbar.set)
-
-    def generate_report(self):
-        # The concept of "alumni as of a given date" is better handled by checking a status field
-        # rather than comparing academic years with a "date" directly.
-        # Assuming "Alumni" status in `serves` table is definitive for alumni.
-        # If 'academic_year' comparison is critical, it implies a last active year *before* a given year.
-        # Let's adjust the query to reflect the 'Alumni' status directly, as it's more robust.
-
-        # If you still want to filter by academic year less than a given year:
-        # academic_year_filter = self.academic_year_entry.get().strip()
-        # if not academic_year_filter.isdigit():
-        #     messagebox.showerror("Input Error", "Academic Year (as of) must be a year (e.g., 2024).")
-        #     return
-        # year_int = int(academic_year_filter)
-
-        for i in self.tree.get_children():
-            self.tree.delete(i)
-
-        try:
-            # Query for alumni: members with status 'Alumni' in the given organization
-            query = """
-            SELECT
-                m.student_no,
-                m.first_name,
-                m.last_name,
-                m.batch,
-                s.academic_year, -- The year they were marked alumni or last active
-                s.semester,    -- The semester they were marked alumni or last active
-                s.role,
-                s.committee
-            FROM member m
-            JOIN serves s
-                ON m.student_no = s.student_no
-            WHERE s.org_name = %s
-                AND s.status = 'Alumni'
-            ORDER BY m.last_name, m.first_name;
-            """
-            cursor.execute(query, (CURRENT_ORG_NAME,)) # No academic_year_filter for this version
-            records = cursor.fetchall()
-
-            if records:
-                for record in records:
-                    self.tree.insert("", "end", values=record)
-            else:
-                messagebox.showinfo("No Data", f"No alumni members found for {CURRENT_ORG_NAME}.")
-        except mysql.connector.Error as err:
-            messagebox.showerror("Database Error", f"Failed to retrieve alumni members: {err}")
-
-class ViewTotalPaidUnpaidFeesPage(BasePage):
-    def __init__(self, master, app_instance):
-        super().__init__(master, app_instance, f"Total Paid/Unpaid Fees for {CURRENT_ORG_NAME}")
-        self.create_widgets_with_filters()
-
-    def create_widgets_with_filters(self):
-        ttk.Label(self, text="As of Date (YYYY-MM-DD):").grid(row=1, column=0, sticky=W, padx=5, pady=2)
-        self.as_of_date_entry = ttk.Entry(self)
-        self.as_of_date_entry.grid(row=1, column=1, sticky=(W, E), padx=5, pady=2)
-        self.as_of_date_entry.insert(0, datetime.date.today().strftime('%Y-%m-%d')) # Default to today
-
-        ttk.Button(self, text="Generate Report", command=self.generate_report).grid(row=2, column=0, columnspan=2, pady=10)
-
-        self.unpaid_label = ttk.Label(self, text="Total Unpaid Amount: PHP 0.00", font=(None, 12, BOLD), foreground="red")
-        self.unpaid_label.grid(row=3, column=0, columnspan=2, pady=5)
-
-        self.paid_label = ttk.Label(self, text="Total Paid Amount: PHP 0.00", font=(None, 12, BOLD), foreground="green")
-        self.paid_label.grid(row=4, column=0, columnspan=2, pady=5)
-
-    def generate_report(self):
-        as_of_date_str = self.as_of_date_entry.get().strip()
-
-        if not as_of_date_str:
-            messagebox.showerror("Input Error", "Please enter a date.")
-            return
-
-        try:
-            # Validate date format
-            datetime.datetime.strptime(as_of_date_str, '%Y-%m-%d')
-        except ValueError:
-            messagebox.showerror("Input Error", "Invalid date format. Please use YYYY-MM-DD.")
-            return
-
-        try:
-            # SQL query from your provided list (number 9), corrected for payment_status type
-            query = """
-            SELECT
-                COALESCE(SUM(CASE WHEN f.payment_status = 'Unpaid' OR f.date_paid IS NULL THEN f.amount ELSE 0 END), 0) AS unpaid_amount,
-                COALESCE(SUM(CASE WHEN f.payment_status = 'Paid' AND f.date_paid IS NOT NULL THEN f.amount ELSE 0 END), 0) AS paid_amount
-            FROM fee f
-            WHERE f.org_name = %s AND f.payment_deadline <= %s;
-            """
-            cursor.execute(query, (CURRENT_ORG_NAME, as_of_date_str))
-            result = cursor.fetchone()
-
-            if result:
-                unpaid_amount = result[0]
-                paid_amount = result[1]
-                self.unpaid_label.config(text=f"Total Unpaid Amount: PHP {unpaid_amount:,.2f}")
-                self.paid_label.config(text=f"Total Paid Amount: PHP {paid_amount:,.2f}")
-            else:
-                self.unpaid_label.config(text="Total Unpaid Amount: PHP 0.00")
-                self.paid_label.config(text="Total Paid Amount: PHP 0.00")
-                messagebox.showinfo("No Data", "No fee records found for the specified organization as of this date.")
-        except mysql.connector.Error as err:
-            messagebox.showerror("Database Error", f"Failed to retrieve fee summary: {err}")
-
-class ViewHighestDebtMembersPage(BasePage):
-    def __init__(self, master, app_instance):
-        super().__init__(master, app_instance, f"Members with Highest Debt in {CURRENT_ORG_NAME}")
-        self.create_widgets_with_filters()
-
-    def create_widgets_with_filters(self):
-        ttk.Label(self, text="Academic Year:").grid(row=1, column=0, sticky=W, padx=5, pady=2)
-        self.academic_year_entry = ttk.Entry(self)
-        self.academic_year_entry.grid(row=1, column=1, sticky=(W, E), padx=5, pady=2)
-        self.academic_year_entry.insert(0, datetime.datetime.now().strftime('%Y') + "-" + str(datetime.datetime.now().year + 1))
-
-        ttk.Label(self, text="Semester:").grid(row=2, column=0, sticky=W, padx=5, pady=2)
-        self.semester_options = ["First", "Second"] # REMOVED "Midyear"
-        self.semester_combobox = ttk.Combobox(self, values=self.semester_options, state="readonly")
-        self.semester_combobox.grid(row=2, column=1, sticky=(W, E), padx=5, pady=2)
-        self.semester_combobox.set("First")
-
-        ttk.Button(self, text="Generate Report", command=self.generate_report).grid(row=3, column=0, columnspan=2, pady=10)
-
-        self.result_label = ttk.Label(self, text="Member with Highest Debt: N/A", font=(None, 12, BOLD), foreground="blue")
-        self.result_label.grid(row=4, column=0, columnspan=2, pady=5)
-
-    def generate_report(self):
-        academic_year = self.academic_year_entry.get().strip()
-        semester = self.semester_combobox.get().strip()
-
-        if not all([academic_year, semester]):
-            messagebox.showerror("Input Error", "Please select Academic Year and Semester.")
-            return
-
-        try:
-            # SQL query from your provided list (number 10), joining to get member name
-            query = """
-            SELECT
-                m.student_no,
-                m.first_name,
-                m.last_name,
-                SUM(f.amount) AS total_debt
-            FROM FEE f
-            JOIN SERVES s
-                ON f.student_no = s.student_no AND f.org_name = s.org_name
-            JOIN member m
-                ON s.student_no = m.student_no
-            WHERE s.org_name = %s
-                AND s.academic_year = %s
-                AND s.semester = %s
-                AND (f.payment_status = "Unpaid" OR f.date_paid IS NULL)
-            GROUP BY m.student_no, m.first_name, m.last_name
-            ORDER BY total_debt DESC
-            LIMIT 1;
-            """
-            cursor.execute(query, (CURRENT_ORG_NAME, academic_year, semester))
-            result = cursor.fetchone()
-
-            if result:
-                student_no, first_name, last_name, total_debt = result
-                self.result_label.config(text=f"Member with Highest Debt: {first_name} {last_name} ({student_no}) - PHP {total_debt:,.2f}")
-            else:
-                self.result_label.config(text="No unpaid debts found for the specified period.")
-                messagebox.showinfo("No Data", "No unpaid debts found for the specified semester and academic year.")
-        except mysql.connector.Error as err:
-            messagebox.showerror("Database Error", f"Failed to retrieve highest debt member: {err}")
-
-class ViewAllMembersByAttributesPage(BasePage):
-    def __init__(self, master, app_instance):
-        super().__init__(master, app_instance, f"All Members of {CURRENT_ORG_NAME} by Attributes")
-        self.create_widgets_with_filters()
-
-    def create_widgets_with_filters(self):
-        # Filter options
-        ttk.Label(self, text="Academic Year:").grid(row=1, column=0, sticky=W, padx=5, pady=2)
-        self.academic_year_entry = ttk.Entry(self)
-        self.academic_year_entry.grid(row=1, column=1, sticky=(W, E), padx=5, pady=2)
-
-        ttk.Label(self, text="Semester:").grid(row=2, column=0, sticky=W, padx=5, pady=2)
-        self.semester_options = ["First", "Second"] # REMOVED "Midyear"
-        self.semester_combobox = ttk.Combobox(self, values=self.semester_options, state="readonly")
-        self.semester_combobox.grid(row=2, column=1, sticky=(W, E), padx=5, pady=2)
-
-        ttk.Label(self, text="Role:").grid(row=3, column=0, sticky=W, padx=5, pady=2)
-        self.role_options = ["", "Member", "Executive President", "VP Internal", "VP External", "Secretary", "Treasurer"] # Added empty for "all"
-        self.role_combobox = ttk.Combobox(self, values=self.role_options, state="readonly")
-        self.role_combobox.grid(row=3, column=1, sticky=(W, E), padx=5, pady=2)
-
-        ttk.Label(self, text="Status:").grid(row=4, column=0, sticky=W, padx=5, pady=2)
-        self.status_options = ["", "Active", "Inactive", "Dismissed", "Alumni"] # Added empty for "all"
-        self.status_combobox = ttk.Combobox(self, values=self.status_options, state="readonly")
-        self.status_combobox.grid(row=4, column=1, sticky=(W, E), padx=5, pady=2)
-
-        ttk.Label(self, text="Gender:").grid(row=5, column=0, sticky=W, padx=5, pady=2)
-        self.gender_options = ["", "Male", "Female", "Other"] # Added empty for "all"
-        self.gender_combobox = ttk.Combobox(self, values=self.gender_options, state="readonly")
-        self.gender_combobox.grid(row=5, column=1, sticky=(W, E), padx=5, pady=2)
-
-        ttk.Label(self, text="Degree Program:").grid(row=6, column=0, sticky=W, padx=5, pady=2)
-        self.degree_program_entry = ttk.Entry(self)
-        self.degree_program_entry.grid(row=6, column=1, sticky=(W, E), padx=5, pady=2)
-
-        ttk.Label(self, text="Batch:").grid(row=7, column=0, sticky=W, padx=5, pady=2)
-        self.batch_entry = ttk.Entry(self)
-        self.batch_entry.grid(row=7, column=1, sticky=(W, E), padx=5, pady=2)
-
-        ttk.Label(self, text="Committee:").grid(row=8, column=0, sticky=W, padx=5, pady=2)
-        self.committee_options = ["", "Executive", "Finance", "Logistics", "Publicity", "Internal Affairs", "External Affairs"] # Added empty for "all"
-        self.committee_combobox = ttk.Combobox(self, values=self.committee_options, state="readonly")
-        self.committee_combobox.grid(row=8, column=1, sticky=(W, E), padx=5, pady=2)
-
-        ttk.Button(self, text="Generate Report", command=self.generate_report).grid(row=9, column=0, columnspan=2, pady=10)
-
-        # Treeview for displaying results
-        self.tree = ttk.Treeview(self, columns=("Student No", "Name", "Degree", "Gender", "Batch", "Academic Year", "Semester", "Role", "Status", "Committee"), show="headings")
-        self.tree.heading("Student No", text="Student No")
-        self.tree.heading("Name", text="Name")
-        self.tree.heading("Degree", text="Degree Program")
-        self.tree.heading("Gender", text="Gender")
-        self.tree.heading("Batch", text="Batch")
-        self.tree.heading("Academic Year", text="Academic Year")
-        self.tree.heading("Semester", text="Semester")
-        self.tree.heading("Role", text="Role")
-        self.tree.heading("Status", text="Status")
-        self.tree.heading("Committee", text="Committee")
-
-        self.tree.column("Student No", width=80, anchor=CENTER)
-        self.tree.column("Name", width=150, anchor=W)
-        self.tree.column("Degree", width=120, anchor=W)
-        self.tree.column("Gender", width=60, anchor=CENTER)
-        self.tree.column("Batch", width=60, anchor=CENTER)
-        self.tree.column("Academic Year", width=100, anchor=CENTER)
-        self.tree.column("Semester", width=80, anchor=CENTER)
-        self.tree.column("Role", width=100, anchor=W)
-        self.tree.column("Status", width=80, anchor=CENTER)
-        self.tree.column("Committee", width=100, anchor=W)
-
-        self.tree.grid(row=10, column=0, columnspan=2, sticky=(N, S, E, W), pady=10)
-        self.grid_rowconfigure(10, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
-        scrollbar.grid(row=10, column=2, sticky=(N, S))
-        self.tree.configure(yscrollcommand=scrollbar.set)
-
-    def generate_report(self):
-        academic_year = self.academic_year_entry.get().strip()
-        semester = self.semester_combobox.get().strip()
-        role = self.role_combobox.get().strip()
-        status = self.status_combobox.get().strip()
-        gender = self.gender_combobox.get().strip()
-        degree_program = self.degree_program_entry.get().strip()
-        batch = self.batch_entry.get().strip()
-        committee = self.committee_combobox.get().strip()
-
-        for i in self.tree.get_children():
-            self.tree.delete(i)
-
-        try:
-            # Base query (from problem 1, with added joins to get member details)
-            query = """
-            SELECT
-                m.student_no,
-                CONCAT(m.first_name, ' ', m.last_name),
-                m.degree_program,
-                m.gender,
-                m.batch,
-                s.academic_year,
-                s.semester,
-                s.role,
-                s.status,
-                s.committee
-            FROM member m
-            JOIN serves s
-                ON m.student_no = s.student_no
-            WHERE s.org_name = %s
-            """
-            params = [CURRENT_ORG_NAME]
-
-            # Add filters dynamically
-            if academic_year:
-                query += " AND s.academic_year = %s"
-                params.append(academic_year)
-            if semester:
-                query += " AND s.semester = %s"
-                params.append(semester)
-            if role:
-                query += " AND s.role = %s"
-                params.append(role)
-            if status:
-                query += " AND s.status = %s"
-                params.append(status)
-            if gender:
-                query += " AND m.gender = %s"
-                params.append(gender)
-            if degree_program:
-                query += " AND m.degree_program LIKE %s" # Use LIKE for partial match
-                params.append(f"%{degree_program}%")
-            if batch:
-                try:
-                    batch_int = int(batch)
-                    query += " AND m.batch = %s"
-                    params.append(batch_int)
-                except ValueError:
-                    messagebox.showerror("Input Error", "Batch must be an integer.")
-                    return
-            if committee:
-                query += " AND s.committee = %s"
-                params.append(committee)
-
-            query += " ORDER BY m.last_name, m.first_name, s.academic_year DESC, CASE s.semester WHEN 'First' THEN 2 WHEN 'Second' THEN 1 ELSE 0 END DESC;"
-
-            cursor.execute(query, tuple(params))
-            records = cursor.fetchall()
-
-            if records:
-                for record in records:
-                    self.tree.insert("", "end", values=record)
-            else:
-                messagebox.showinfo("No Data", "No members found matching the selected criteria.")
-        except mysql.connector.Error as err:
-            messagebox.showerror("Database Error", f"Failed to retrieve members: {err}")
-
-class ViewOrgUnpaidFeesPage(BasePage):
-    def __init__(self, master, app_instance):
-        super().__init__(master, app_instance, f"Unpaid Fees for {CURRENT_ORG_NAME} (Org POV)")
-        self.create_widgets_with_filters()
-
-    def create_widgets_with_filters(self):
-        ttk.Label(self, text="Academic Year:").grid(row=1, column=0, sticky=W, padx=5, pady=2)
-        self.academic_year_entry = ttk.Entry(self)
-        self.academic_year_entry.grid(row=1, column=1, sticky=(W, E), padx=5, pady=2)
-        self.academic_year_entry.insert(0, datetime.datetime.now().strftime('%Y') + "-" + str(datetime.datetime.now().year + 1))
-
-        ttk.Label(self, text="Semester:").grid(row=2, column=0, sticky=W, padx=5, pady=2)
-        self.semester_options = ["First", "Second"] # REMOVED "Midyear"
-        self.semester_combobox = ttk.Combobox(self, values=self.semester_options, state="readonly")
-        self.semester_combobox.grid(row=2, column=1, sticky=(W, E), padx=5, pady=2)
-        self.semester_combobox.set("First")
-
-        ttk.Button(self, text="Generate Report", command=self.generate_report).grid(row=3, column=0, columnspan=2, pady=10)
-
-        self.tree = ttk.Treeview(self, columns=("Student No", "Name", "Receipt No", "Amount", "Payment Deadline"), show="headings")
-        self.tree.heading("Student No", text="Student No")
-        self.tree.heading("Name", text="Name")
-        self.tree.heading("Receipt No", text="Receipt No")
-        self.tree.heading("Amount", text="Amount (PHP)")
-        self.tree.heading("Payment Deadline", text="Payment Deadline")
-
-        self.tree.column("Student No", width=80, anchor=CENTER)
-        self.tree.column("Name", width=150, anchor=W)
-        self.tree.column("Receipt No", width=100, anchor=CENTER)
-        self.tree.column("Amount", width=100, anchor=E)
-        self.tree.column("Payment Deadline", width=120, anchor=CENTER)
-
-        self.tree.grid(row=4, column=0, columnspan=2, sticky=(N, S, E, W), pady=10)
-        self.grid_rowconfigure(4, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
-        scrollbar.grid(row=4, column=2, sticky=(N, S))
-        self.tree.configure(yscrollcommand=scrollbar.set)
-
-    def generate_report(self):
-        academic_year = self.academic_year_entry.get().strip()
-        semester = self.semester_combobox.get().strip()
-
-        if not all([academic_year, semester]):
-            messagebox.showerror("Input Error", "Please select Academic Year and Semester.")
-            return
-
-        for i in self.tree.get_children():
-            self.tree.delete(i)
-
-        try:
-            # SQL query from your provided list (number 2)
-            query = """
-            SELECT DISTINCT
-                m.student_no,
-                CONCAT(m.first_name, ' ', m.middle_name, ' ', m.last_name) AS full_name,
-                f.receipt_no,
-                f.amount,
-                f.payment_deadline
-            FROM member m
-            JOIN fee f
-                ON m.student_no = f.student_no
-            JOIN serves s
-                ON m.student_no = s.student_no AND s.org_name = f.org_name
-            WHERE f.org_name = %s
-                AND s.academic_year = %s
-                AND s.semester = %s
-                AND (f.payment_status = "Unpaid" OR f.date_paid IS NULL)
-            ORDER BY m.last_name, m.first_name, f.payment_deadline DESC;
-            """
-            cursor.execute(query, (CURRENT_ORG_NAME, academic_year, semester))
-            records = cursor.fetchall()
-
-            if records:
-                for record in records:
-                    self.tree.insert("", "end", values=record)
-            else:
-                messagebox.showinfo("No Data", "No members with unpaid fees found for the specified semester and academic year.")
-        except mysql.connector.Error as err:
-            messagebox.showerror("Database Error", f"Failed to retrieve unpaid fees: {err}")
-
-
-# --- Main Application Class ---
-# ... (Previous code remains the same until the App class definition)
-
-# --- Main Application Class ---
-class App(Tk):
+# --- App Class (Updated to reflect the new structure) ---
+class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Organization Management System")
-        self.geometry("1200x800")
+        self.geometry("1200x800") # Adjusted size for more content
 
         self.current_page = None
         self.pages = {}
@@ -1671,25 +1197,21 @@ class App(Tk):
             messagebox.showerror("Initialization Error", "Failed to connect to the database. Exiting.")
             self.destroy()
 
-    def show_page(self, page_class_name, *args): # Renamed for clarity: page_class_name
+    def show_page(self, page_class_name, *args):
         if self.current_page:
             self.current_page.destroy()
 
-        # Get the class itself from the pages dictionary
         page_class = self.pages.get(page_class_name)
 
         if page_class:
-            # All pages expect master and app_instance.
-            # master is 'self' (the Tk root window)
-            # app_instance is 'self' (the App instance itself)
-            self.current_page = page_class(self, self, *args) # Pass self twice: once as master, once as app_instance
+            self.current_page = page_class(self, self, *args)
             self.current_page.tkraise()
         else:
             messagebox.showerror("Navigation Error", f"Page class '{page_class_name}' not found.")
 
     def show_auth_page(self):
-        self.pages['AuthPage'] = AuthPage # Store the class, not an instance
-        self.show_page('AuthPage') # Pass the string name of the class
+        self.pages['AuthPage'] = AuthPage
+        self.show_page('AuthPage')
 
     def show_member_menu(self):
         self.pages['MemberMenuPage'] = MemberMenuPage
@@ -1712,9 +1234,16 @@ class App(Tk):
         self.show_page('ViewMembersUnpaidFeesPage')
 
     def show_organization_menu(self):
+        # OrganizationMenuPage now contains the tabs directly
         self.pages['OrganizationMenuPage'] = OrganizationMenuPage
         self.show_page('OrganizationMenuPage')
 
+    # Removed show_organization_member_management_page as it's now integrated
+    # def show_organization_member_management_page(self):
+    #     self.pages['OrganizationMemberManagementPage'] = OrganizationMemberManagementPage
+    #     self.show_page('OrganizationMemberManagementPage')
+
+    # The fees management tab is still a placeholder
     def show_add_member_page(self):
         self.pages['AddNewMemberPage'] = AddNewMemberPage
         self.show_page('AddNewMemberPage')
@@ -1723,41 +1252,9 @@ class App(Tk):
         self.pages['EditMembershipStatusPage'] = EditMembershipStatusPage
         self.show_page('EditMembershipStatusPage')
 
-    def show_view_exec_committee_page(self):
-        self.pages['ViewExecutiveCommitteePage'] = ViewExecutiveCommitteePage
-        self.show_page('ViewExecutiveCommitteePage')
-
-    def show_view_presidents_by_ay_page(self):
-        self.pages['ViewPresidentsByAYPage'] = ViewPresidentsByAYPage
-        self.show_page('ViewPresidentsByAYPage')
-
     def show_view_late_payments_page(self):
         self.pages['ViewLatePaymentsPage'] = ViewLatePaymentsPage
         self.show_page('ViewLatePaymentsPage')
-
-    def show_view_active_inactive_percentage_page(self):
-        self.pages['ViewActiveInactivePercentagePage'] = ViewActiveInactivePercentagePage
-        self.show_page('ViewActiveInactivePercentagePage')
-
-    def show_view_alumni_members_page(self):
-        self.pages['ViewAlumniMembersPage'] = ViewAlumniMembersPage
-        self.show_page('ViewAlumniMembersPage')
-
-    def show_view_total_paid_unpaid_fees_page(self):
-        self.pages['ViewTotalPaidUnpaidFeesPage'] = ViewTotalPaidUnpaidFeesPage
-        self.show_page('ViewTotalPaidUnpaidFeesPage')
-
-    def show_view_highest_debt_members_page(self):
-        self.pages['ViewHighestDebtMembersPage'] = ViewHighestDebtMembersPage
-        self.show_page('ViewHighestDebtMembersPage')
-
-    def show_view_all_members_by_attributes_page(self):
-        self.pages['ViewAllMembersByAttributesPage'] = ViewAllMembersByAttributesPage
-        self.show_page('ViewAllMembersByAttributesPage')
-
-    def show_view_org_unpaid_fees_page(self):
-        self.pages['ViewOrgUnpaidFeesPage'] = ViewOrgUnpaidFeesPage
-        self.show_page('ViewOrgUnpaidFeesPage')
 
     def logout(self):
         global CURRENT_USER_TYPE, CURRENT_USER_ID, CURRENT_ORG_NAME
@@ -1776,4 +1273,3 @@ if __name__ == "__main__":
     app = App()
     app.protocol("WM_DELETE_WINDOW", app.on_closing)
     app.mainloop()
-    
