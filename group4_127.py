@@ -80,10 +80,10 @@ class AuthPage(ttk.Frame):
 
         ttk.Label(member_panel, text="Student no.", font=("Arial", 10, BOLD)).grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
         self.member_student_no_entry = ttk.Entry(member_panel, font=("Arial", 12))
-        self.member_student_no_entry.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 5))
+        self.member_student_no_entry.grid(row=3, column=0, columnspan=1, sticky=(tk.W, tk.E), pady=(0, 5))
         ttk.Label(member_panel, text="Format: 20XX-XXXXX", font=("Arial", 8), foreground='grey').grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=(0, 20))
 
-        ttk.Button(member_panel, text="Log-in", style='Login.TButton', command=self.member_login).grid(row=3, column=2, sticky=tk.E, padx=(5,0))
+        ttk.Button(member_panel, text="Log-in", style='Login.TButton', command=self.member_login).grid(row=3, column=1, sticky=tk.E, padx=(5,0))
 
         ttk.Frame(member_panel, height=2, relief='sunken', style='Separator.TFrame').grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(20, 20))
 
@@ -119,8 +119,8 @@ class AuthPage(ttk.Frame):
 
         ttk.Label(member_panel, text="Last Name", font=("Arial", 10, BOLD)).grid(row=15, column=0, sticky=tk.W, pady=(10, 0))
         self.signup_last_name_entry = ttk.Entry(member_panel, font=("Arial", 12))
-        self.signup_last_name_entry.grid(row=16, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
-        ttk.Button(member_panel, text="Sign-up", style='Login.TButton', command=self.member_signup).grid(row=16, column=2, sticky=tk.E, padx=(5,0))
+        self.signup_last_name_entry.grid(row=16, column=0, columnspan=1, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
+        ttk.Button(member_panel, text="Sign-up", style='Login.TButton', command=self.member_signup).grid(row=16, column=1, sticky=tk.E, padx=(5,0))
 
         # --- Organization Panel (Right Side) ---
         org_panel = ttk.Frame(self, style='AuthPanel.TFrame', padding="30")
@@ -131,7 +131,7 @@ class AuthPage(ttk.Frame):
         ttk.Label(org_panel, text="Organization", font=("Arial", 24, BOLD), foreground='black').grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 5))
         ttk.Label(org_panel, text="Enter your org ID below or register a new org.", font=("Arial", 10), foreground='grey').grid(row=1, column=0, columnspan=2, sticky=tk.W, pady=(0, 20))
 
-        ttk.Label(org_panel, text="Organization ID", font=("Arial", 10, BOLD)).grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
+        ttk.Label(org_panel, text="Organization ID", font=("Arial", 10, BOLD)).grid(row=2, column=0, columnspan=1, sticky=tk.W, pady=(10, 0))
         self.org_id_entry = ttk.Entry(org_panel, font=("Arial", 12))
         self.org_id_entry.grid(row=3, column=0, sticky=(tk.W, tk.E), pady=(0, 5))
         ttk.Label(org_panel, text="Format: XXXXX", font=("Arial", 8), foreground='grey').grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=(0, 20))
@@ -140,15 +140,17 @@ class AuthPage(ttk.Frame):
 
         ttk.Frame(org_panel, height=2, relief='sunken', style='Separator.TFrame').grid(row=5, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(20, 20))
 
-        ttk.Label(org_panel, text="Organization ID", font=("Arial", 10, BOLD)).grid(row=6, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
-        self.signup_org_id_entry = ttk.Entry(org_panel, font=("Arial", 12))
-        self.signup_org_id_entry.grid(row=7, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
-        ttk.Label(org_panel, text="Format: XXXXX", font=("Arial", 8), foreground='grey').grid(row=8, column=0, columnspan=2, sticky=tk.W, pady=(0, 20))
-
-        ttk.Label(org_panel, text="Organization Name", font=("Arial", 10, BOLD)).grid(row=9, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
+        # Modified Section for Organization Sign-up
+        ttk.Label(org_panel, text="Organization Name", font=("Arial", 10, BOLD)).grid(row=6, column=0, sticky=tk.W, pady=(10, 0))
         self.signup_org_name_entry = ttk.Entry(org_panel, font=("Arial", 12))
-        self.signup_org_name_entry.grid(row=10, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
-        ttk.Button(org_panel, text="Sign-up", style='Login.TButton', command=self.org_signup).grid(row=10, column=1, sticky=tk.E, padx=(5,0))
+        self.signup_org_name_entry.grid(row=7, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
+
+        ttk.Label(org_panel, text="Organization ID", font=("Arial", 10, BOLD)).grid(row=8, column=0, sticky=tk.W, pady=(10, 0))
+        self.signup_org_id_entry = ttk.Entry(org_panel, font=("Arial", 12))
+        self.signup_org_id_entry.grid(row=9, column=0, sticky=(tk.W, tk.E), pady=(0, 5), padx=(0,5))
+        ttk.Label(org_panel, text="Format: XXXXX", font=("Arial", 8), foreground='grey').grid(row=10, column=0, sticky=tk.W, pady=(0, 20)) 
+
+        ttk.Button(org_panel, text="Sign-up", style='Login.TButton', command=self.org_signup).grid(row=9, column=1, sticky=tk.E, padx=(5,0))
 
         org_panel.grid_columnconfigure(0, weight=1)
         org_panel.grid_columnconfigure(1, weight=0)
@@ -623,12 +625,30 @@ class OrganizationMenuPage(BasePage):
         ttk.Label(self.fees_tab, text="Fees Management features will be implemented here.").pack(pady=20)
 
 
+    def get_current_academic_period(self):
+        """Determines the current academic year and semester based on the redefined ranges."""
+        now = datetime.datetime.now()
+        current_year = now.year
+        current_month = now.month
+
+        if 8 <= current_month <= 12: # August to December
+            academic_year = f"{current_year}-{current_year + 1}"
+            semester = "First"
+        elif 1 <= current_month <= 5: # January to May
+            academic_year = f"{current_year - 1}-{current_year}"
+            semester = "Second"
+        else: # June/July or other months, assume it's part of the next upcoming AY or a break
+            # This logic might need further refinement based on specific university breaks/summer terms
+            # For simplicity, if outside Aug-Dec or Jan-May, we'll default to the upcoming First semester
+            academic_year = f"{current_year}-{current_year + 1}"
+            semester = "First" # Or handle as 'Summer' or 'Break' if your system supports it.
+                               # For this app, we'll assign it to the upcoming First Sem AY.
+
+        return academic_year, semester
+
     def get_active_members_count_for_current_semester(self):
         try:
-            current_year = datetime.datetime.now().year
-            current_month = datetime.datetime.now().month
-            academic_year = f"{current_year}-{current_year + 1}" if current_month >= 6 else f"{current_year - 1}-{current_year}" # Assuming academic year starts in June
-            semester = "First" if current_month >= 6 or current_month <= 10 else "Second" # Simplified logic for semester
+            academic_year, semester = self.get_current_academic_period()
 
             query = """
                 SELECT COUNT(DISTINCT student_no)
@@ -659,13 +679,15 @@ class OrganizationMenuPage(BasePage):
         filter_row = 0
         self.filter_vars = {} # Dictionary to hold StringVar for filters
 
+        current_ay, current_sem = self.get_current_academic_period()
+
         ttk.Label(filter_frame, text="Academic Year:").grid(row=filter_row, column=0, sticky=tk.W, pady=2)
-        self.filter_vars['academic_year'] = tk.StringVar(value=f"{datetime.datetime.now().year}-{datetime.datetime.now().year + 1}")
+        self.filter_vars['academic_year'] = tk.StringVar(value=current_ay) # Default to current AY
         ttk.Entry(filter_frame, textvariable=self.filter_vars['academic_year']).grid(row=filter_row, column=1, sticky=(tk.W, tk.E), pady=2)
         filter_row += 1
 
         ttk.Label(filter_frame, text="Semester:").grid(row=filter_row, column=0, sticky=tk.W, pady=2)
-        self.filter_vars['semester'] = tk.StringVar(value="All")
+        self.filter_vars['semester'] = tk.StringVar(value="All") # Default to All for filters
         ttk.Combobox(filter_frame, textvariable=self.filter_vars['semester'], values=["All", "First", "Second"], state="readonly").grid(row=filter_row, column=1, sticky=(tk.W, tk.E), pady=2)
         filter_row += 1
 
@@ -814,11 +836,8 @@ class OrganizationMenuPage(BasePage):
         self.set_default_treeview_columns() # Use default columns for consistency
 
         try:
-            # Determine current academic year and semester
-            current_year = datetime.datetime.now().year
-            current_month = datetime.datetime.now().month
-            academic_year = f"{current_year}-{current_year + 1}" if current_month >= 6 else f"{current_year - 1}-{current_year}"
-            semester = "First" if current_month >= 6 or current_month <= 10 else "Second"
+            # Determine current academic year and semester using the refined logic
+            academic_year, semester = self.get_current_academic_period()
 
             query = """
             SELECT
@@ -1088,6 +1107,7 @@ class EditMembershipStatusPage(BasePage):
             self.load_member_info()
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Failed to update membership status: {err}")
+
 
 # --- Placeholder for other Organization POV pages (now mostly integrated or removed) ---
 # ViewLatePaymentsPage (kept separate as it's fees-related)
