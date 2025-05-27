@@ -44,15 +44,14 @@ CREATE TABLE IF NOT EXISTS fee(
 );
 
 CREATE TABLE IF NOT EXISTS serves(
-    student_no VARCHAR(10),
-    org_name VARCHAR(50),
-    academic_year VARCHAR(10),
-    semester VARCHAR(10),
-    role VARCHAR(50),
-    status VARCHAR(10),
-    committee VARCHAR(50), 
-    PRIMARY KEY(student_no, org_name),
-    UNIQUE(academic_year, semester, role, status, committee),
+    student_no VARCHAR(10) NOT NULL, 
+    org_name VARCHAR(50) NOT NULL,   
+    academic_year VARCHAR(10) NOT NULL, 
+    semester VARCHAR(20) NOT NULL,   
+    role VARCHAR(50),                
+    status VARCHAR(10),             
+    committee VARCHAR(50),          
+    PRIMARY KEY(student_no, org_name, academic_year, semester),
     FOREIGN KEY(student_no) REFERENCES member(student_no) ON DELETE CASCADE,
     FOREIGN KEY (org_name) REFERENCES organization (org_name) ON DELETE CASCADE
 );
