@@ -422,20 +422,22 @@ class OrganizationFeesPage(BasePage):
 
     # Calculates totals as of a specific date
     def calculate_totals_as_of_date(self, target_date):
+        """Calculate totals as of a specific date"""
         try:
             year_filter = self.year_var.get()
             semester_filter = self.semester_var.get()
             
+            # Base query for paid/unpaid totals
             base_query = """
                 SELECT 
-                    SUM(CASE WHEN f.date_paid IS NOT NULL AND f.date_paid <= %s THEN f.amount ELSE 0 END) AS total_paid,
-                    SUM(CASE WHEN f.date_paid IS NULL THEN f.amount ELSE 0 END) AS total_unpaid
+                    COALESCE(SUM(CASE WHEN f.date_paid IS NOT NULL AND f.date_paid <= %s THEN f.amount ELSE 0 END), 0) as total_paid,
+                    COALESCE(SUM(CASE WHEN f.date_paid IS NULL OR f.date_paid > %s THEN f.amount ELSE 0 END), 0) as total_unpaid
                 FROM fee f
                 JOIN serves s ON f.student_no = s.student_no AND f.org_name = s.org_name
                 WHERE f.org_name = %s
             """
             
-            params = [target_date, self.app.org_name]
+            params = [target_date, target_date, self.app.org_name]
             
             if year_filter != "All":
                 base_query += " AND s.academic_year = %s"
@@ -453,20 +455,23 @@ class OrganizationFeesPage(BasePage):
             self.total_paid_label.config(text=f"₱{total_paid:,.2f} (Paid)")
             self.total_unpaid_label.config(text=f"₱{total_unpaid:,.2f} (Unpaid)")
             
+            # Query for highest debt (only unpaid/late as of target date)
             debt_query = """
                 SELECT 
                     CONCAT(m.first_name, ' ', m.last_name) AS name,
                     f.amount,
-                    CASE WHEN f.payment_deadline <= %s THEN 'late' ELSE 'unpaid' END AS debt_status
+                    CASE 
+                        WHEN f.payment_deadline <= %s THEN 'late' 
+                        ELSE 'unpaid' 
+                    END AS debt_status
                 FROM fee f
                 JOIN member m ON f.student_no = m.student_no
                 JOIN serves s ON f.student_no = s.student_no AND f.org_name = s.org_name
                 WHERE f.org_name = %s
-                AND f.date_paid IS NULL
-                AND (f.payment_deadline > %s OR f.payment_deadline <= %s)
+                AND (f.date_paid IS NULL OR f.date_paid > %s)
             """
             
-            debt_params = [target_date, self.app.org_name, target_date, target_date]
+            debt_params = [target_date, self.app.org_name, target_date]
             
             if year_filter != "All":
                 debt_query += " AND s.academic_year = %s"
